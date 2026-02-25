@@ -49,6 +49,8 @@ fun MainView(
 
     val title = listOf("Agenda","To-Do List","Maps")
     val subtitle = listOf("","What are you going to do today ?","Where do you need to go ?")
+
+
     Scaffold(
         modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = colorScheme.surfaceContainer,
@@ -67,6 +69,8 @@ fun MainView(
                 0-> CalendarView()
                 1-> TaskListView(innerPadding,navController,taskListVM)
                 2-> TaskListView(innerPadding,navController,taskListVM)
+                1-> TaskListView(innerPadding)
+                2-> MapsView()
             }
         }
     }
