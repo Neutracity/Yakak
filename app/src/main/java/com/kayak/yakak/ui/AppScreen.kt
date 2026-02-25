@@ -30,6 +30,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.kayak.yakak.ui.calendar.CalendarView
+import com.kayak.yakak.ui.maps.MapsView
 import com.kayak.yakak.ui.tasklist.EditView
 import com.kayak.yakak.ui.tasklist.TaskListVM
 import com.kayak.yakak.ui.tasklist.TaskListView
@@ -63,13 +64,12 @@ fun MainView(
     ) { innerPadding ->
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            userScrollEnabled = false
         ) { pageIndex ->
             when (pageIndex){
                 0-> CalendarView()
                 1-> TaskListView(innerPadding,navController,taskListVM)
-                2-> TaskListView(innerPadding,navController,taskListVM)
-                1-> TaskListView(innerPadding)
                 2-> MapsView()
             }
         }
