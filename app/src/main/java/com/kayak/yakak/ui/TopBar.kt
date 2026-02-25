@@ -17,13 +17,13 @@ import androidx.compose.ui.Modifier
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun TopBar(modifier: Modifier = Modifier, scrollBehavior: TopAppBarScrollBehavior, title : String = "", subtitle : String = ""){
+fun TopBar(modifier: Modifier = Modifier, scrollBehavior: TopAppBarScrollBehavior, title : String = "", subtitle : String = "", onStartClick : () -> Unit = {}){
     LargeFlexibleTopAppBar(
         title = { Text(title)},
         subtitle = { Text(subtitle)},
         navigationIcon = {
             IconButton(
-                onClick = {},
+                onClick = onStartClick,
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = colorScheme.surface,
                     contentColor = colorScheme.onSurface

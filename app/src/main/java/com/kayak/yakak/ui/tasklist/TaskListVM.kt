@@ -13,7 +13,7 @@ import java.io.Console
 sealed class TaskEvent {
     data class Delete(val task: Task) : TaskEvent()
     data class EditState(val task: Task,val newState: Boolean) : TaskEvent()
-    data class EditTitle(val task: Task,val newTitle: Task) : TaskEvent()
+    data class EditTitle(val task: Task,val newTitle: String) : TaskEvent()
     data class EditDescription(val task: Task,val newDescription: String) : TaskEvent()
     data class EditDate(val task: Task,val newDescription: String) : TaskEvent()
     data class EditLocation(val task: Task, val newLocation: Location) : TaskEvent()

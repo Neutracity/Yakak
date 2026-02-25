@@ -1,39 +1,54 @@
 package com.kayak.yakak.ui
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.kayak.yakak.ui.calendar.CalendarView
+import com.kayak.yakak.ui.tasklist.EditView
 import com.kayak.yakak.ui.tasklist.TaskListVM
 import com.kayak.yakak.ui.tasklist.TaskListView
-import com.kayak.yakak.ui.TopBar
-import com.kayak.yakak.ui.calendar.CalendarView
-import com.kayak.yakak.ui.theme.YakakTheme
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Preview(showBackground = true)
-fun AppScreen(initialPage : Int = 1){
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val pagerState = rememberPagerState(initialPage = initialPage, pageCount = {3})
-    val scope = rememberCoroutineScope()
+fun MainView(
+    scrollBehavior: TopAppBarScrollBehavior,
+    pagerState: PagerState,
+    scope: CoroutineScope,
+    navController: NavHostController,
+    taskListVM: TaskListVM
+){
 
     val title = listOf("Agenda","To-Do List","Maps")
     val subtitle = listOf("","What are you going to do today ?","Where do you need to go ?")
-
-
     Scaffold(
         modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = colorScheme.surfaceContainer,
@@ -50,9 +65,57 @@ fun AppScreen(initialPage : Int = 1){
         ) { pageIndex ->
             when (pageIndex){
                 0-> CalendarView()
-                1-> TaskListView(innerPadding)
-                2-> TaskListView(innerPadding)
+                1-> TaskListView(innerPadding,navController,taskListVM)
+                2-> TaskListView(innerPadding,navController,taskListVM)
             }
         }
     }
+}
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Preview(showBackground = true)
+fun AppScreen(initialPage : Int = 1){
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val pagerState = rememberPagerState(initialPage = initialPage, pageCount = {3})
+    val scope = rememberCoroutineScope()
+    val taskListVM : TaskListVM = viewModel()
+
+
+
+    val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = "main",
+        enterTransition = { slideInHorizontally(initialOffsetX = { it }) + scaleIn(initialScale = 0.9f) },
+        exitTransition = { ExitTransition.None},
+        popEnterTransition = { EnterTransition.None},
+        popExitTransition = {slideOutHorizontally(targetOffsetX = { it }) + scaleOut(animationSpec = tween(1000))},
+
+        ){
+        composable("main"){
+            MainView(scrollBehavior,pagerState,scope,navController,taskListVM)
+        }
+        composable(
+            route = "edit-task/{taskId}",
+            arguments = listOf(navArgument("taskId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val taskId = backStackEntry.arguments?.getInt("taskId")
+            val task = taskListVM.tasks.value.find { it.id == taskId }
+
+            EditView(
+                popBack = { navController.popBackStack() },
+                viewModel = taskListVM,
+                task = task
+            )
+        }
+
+
+    }
+
+
+
 }
