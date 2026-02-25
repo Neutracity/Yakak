@@ -18,6 +18,7 @@ import com.kayak.yakak.ui.tasklist.TaskListVM
 import com.kayak.yakak.ui.tasklist.TaskListView
 import com.kayak.yakak.ui.TopBar
 import com.kayak.yakak.ui.calendar.CalendarView
+import com.kayak.yakak.ui.maps.MapsView
 import com.kayak.yakak.ui.theme.YakakTheme
 import kotlinx.coroutines.launch
 
@@ -51,7 +52,7 @@ fun AppScreen(initialPage : Int = 1){
             when (pageIndex){
                 0-> CalendarView()
                 1-> TaskListView(innerPadding)
-                2-> TaskListView(innerPadding)
+                2-> MapsView()
             }
         }
     }
