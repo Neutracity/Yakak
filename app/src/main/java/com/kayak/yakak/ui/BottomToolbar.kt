@@ -5,9 +5,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
@@ -25,7 +25,8 @@ fun BottomBar(
     modifier: Modifier = Modifier,
     onAgendaClick: () -> Unit = {},
     onTaskListClick: () -> Unit = {},
-    onMapsClick: () -> Unit = {}
+    onMapsClick: () -> Unit = {},
+    onAddClick: () -> Unit = {},
 ) {
     val vibrantColors = FloatingToolbarDefaults.vibrantFloatingToolbarColors()
     Box(
@@ -36,18 +37,18 @@ fun BottomBar(
             expanded = true,
             content = {
                 IconButton(onClick = onAgendaClick) {
-                    Icon(Icons.Default.CalendarMonth, contentDescription = "Agenda")
+                    Icon(Icons.Outlined.CalendarMonth, contentDescription = "Agenda")
                 }
                 IconButton(onClick = onTaskListClick) {
-                    Icon(Icons.Default.Checklist, contentDescription = "Task List")
+                    Icon(Icons.Outlined.Checklist, contentDescription = "Task List")
                 }
                 IconButton(onClick = onMapsClick) {
-                    Icon(Icons.Default.Map, contentDescription = "Maps")
+                    Icon(Icons.Outlined.Map, contentDescription = "Maps")
                 }
             },
             floatingActionButton = {
                 FloatingToolbarDefaults.VibrantFloatingActionButton(
-                    onClick = {  },
+                    onClick = onAddClick,
                     content = {
                         Icon(Icons.Default.Add, contentDescription = "Add")
                     }

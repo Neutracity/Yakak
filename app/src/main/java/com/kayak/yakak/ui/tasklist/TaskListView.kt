@@ -16,6 +16,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextDecoration
@@ -26,13 +28,14 @@ import androidx.navigation.NavController
 import com.kayak.yakak.Task
 import com.kayak.yakak.ui.AppScreen
 import com.kayak.yakak.ui.theme.YKShapeDefaults.bottomListItemShape
+import com.kayak.yakak.ui.theme.YKShapeDefaults.cardShape
 import com.kayak.yakak.ui.theme.YKShapeDefaults.middleListItemShape
 import com.kayak.yakak.ui.theme.YKShapeDefaults.topListItemShape
 
 
 @Composable
 fun TaskItem(task: Task, modifier : Modifier  = Modifier, items : Int = 0, index : Int = 0, onCheck : () -> Unit = {},onClick : () -> Unit = {}){
-    val shape = if(index == items-1 ) bottomListItemShape  else if (index == 0) topListItemShape else middleListItemShape
+    val shape = if (items == 1) cardShape else if(index == items-1 ) bottomListItemShape  else if (index == 0) topListItemShape else middleListItemShape
     ListItem(
         headlineContent = {
             Text(task.name,
@@ -59,8 +62,10 @@ fun TaskItem(task: Task, modifier : Modifier  = Modifier, items : Int = 0, index
 
 @Composable
 fun TaskListView(innerPadding : PaddingValues,navController: NavController,tasks : TaskListVM = viewModel()){
-    val pendingTasks = tasks.tasks.value.filter { !it.isCompleted }
-    val finishedTasks = tasks.tasks.value.filter { it.isCompleted }
+    val state by tasks.uiState.collectAsState()
+    val pendingTasks = state.pendingTasks
+    val finishedTasks = state.finishedTasks
+
     LazyColumn(
         modifier = Modifier.padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp)
@@ -80,7 +85,7 @@ fun TaskListView(innerPadding : PaddingValues,navController: NavController,tasks
                     TaskItem(
                         task = task,
                         index = index,
-                        items = tasks.tasks.value.size,
+                        items = pendingTasks.size,
                         onCheck = {tasks.onEvent(TaskEvent.EditState(task,true))},
                         onClick = {navController.navigate("edit-task/${task.id}")}
 
@@ -104,7 +109,7 @@ fun TaskListView(innerPadding : PaddingValues,navController: NavController,tasks
                     TaskItem(
                         task = task,
                         index = index,
-                        items = tasks.tasks.value.size,
+                        items = finishedTasks.size,
                         onCheck = {tasks.onEvent(TaskEvent.EditState(task,false))},
                         onClick = {navController.navigate("edit-task/${task.id}")}
                     )

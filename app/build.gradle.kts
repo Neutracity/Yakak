@@ -40,6 +40,7 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation("org.osmdroid:osmdroid-android:6.1.18")//ajout openstreetmapinshalla
+    implementation("com.kizitonwose.calendar:compose:2.10.0")
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.ui)

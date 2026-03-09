@@ -1,47 +1,74 @@
 package com.kayak.yakak.ui.tasklist
 
-import android.location.Location
-import android.util.Log
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.kayak.yakak.Location
 import com.kayak.yakak.Task
-import com.kayak.yakak.utils.getTaskList
-import java.io.Console
+import com.kayak.yakak.data.TaskRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 sealed class TaskEvent {
     data class Delete(val task: Task) : TaskEvent()
     data class EditState(val task: Task,val newState: Boolean) : TaskEvent()
     data class EditTitle(val task: Task,val newTitle: String) : TaskEvent()
     data class EditDescription(val task: Task,val newDescription: String) : TaskEvent()
-    data class EditDate(val task: Task,val newDescription: String) : TaskEvent()
+    data class EditDate(val task: Task,val newDate: LocalDate) : TaskEvent()
     data class EditLocation(val task: Task, val newLocation: Location) : TaskEvent()
+    data class NewTask(val task: Task) : TaskEvent()
 
 }
 
+data class TaskListUiState(
+    val pendingTasks: List<Task> = emptyList(),
+    val finishedTasks: List<Task> = emptyList()
+)
+
 class TaskListVM : ViewModel(){
-    private val _tasks : MutableState<List<Task>> = mutableStateOf(emptyList())
-    var tasks : State<List<Task>> = _tasks
+    private val _uiState = MutableStateFlow(TaskListUiState())
+    var uiState: StateFlow<TaskListUiState> = _uiState.asStateFlow()
 
     init {
-        _tasks.value = getTaskList()
+        viewModelScope.launch {
+            TaskRepository.tasks.collect { allTasks ->
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        pendingTasks = allTasks.filter { !it.isCompleted },
+                        finishedTasks = allTasks.filter { it.isCompleted }
+                    )
+                }
+            }
+        }
+
     }
 
     fun onEvent(event: TaskEvent){
+
         when (event){
             is TaskEvent.Delete ->{
-
+                TaskRepository.deleteTask(event.task)
             }
             is TaskEvent.EditState ->{
-                _tasks.value = _tasks.value.map { task ->
-                    if(task.id == event.task.id){
-                        task.copy(isCompleted = event.newState)
-                    }else{
-                        task
-                    }
-                }
-                Log.println(Log.INFO,"test","${event.task.isCompleted}")
+                TaskRepository.updateTask(event.task.copy(isCompleted = event.newState))
+            }
+            is TaskEvent.EditTitle ->{
+                TaskRepository.updateTask(event.task.copy(name = event.newTitle))
+            }
+            is TaskEvent.EditDescription ->{
+                TaskRepository.updateTask(event.task.copy(description = event.newDescription))
+            }
+            is TaskEvent.NewTask ->{
+                TaskRepository.addTask(event.task)
+            }
+            is TaskEvent.EditDate -> {
+                TaskRepository.updateTask(event.task.copy(expirationDate = event.newDate))
+            }
+            is TaskEvent.EditLocation -> {
+                TaskRepository.updateTask(event.task.copy(location = event.newLocation))
             }
             else -> {}
         }

@@ -29,9 +29,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.kayak.yakak.Task
+import com.kayak.yakak.ui.calendar.CalendarVM
 import com.kayak.yakak.ui.calendar.CalendarView
 import com.kayak.yakak.ui.maps.MapsView
 import com.kayak.yakak.ui.tasklist.EditView
+import com.kayak.yakak.ui.tasklist.TaskEvent
 import com.kayak.yakak.ui.tasklist.TaskListVM
 import com.kayak.yakak.ui.tasklist.TaskListView
 import kotlinx.coroutines.CoroutineScope
@@ -45,7 +48,8 @@ fun MainView(
     pagerState: PagerState,
     scope: CoroutineScope,
     navController: NavHostController,
-    taskListVM: TaskListVM
+    taskListVM: TaskListVM,
+    calendarVM: CalendarVM
 ){
 
     val title = listOf("Agenda","To-Do List","Maps")
@@ -59,7 +63,13 @@ fun MainView(
         bottomBar = { BottomBar( expanded = true,
             onAgendaClick = {scope.launch { pagerState.animateScrollToPage(0)}},
             onTaskListClick = {scope.launch { pagerState.animateScrollToPage(1)}},
-            onMapsClick = {scope.launch { pagerState.animateScrollToPage(2)}}
+            onMapsClick = {scope.launch { pagerState.animateScrollToPage(2)}},
+            onAddClick = {
+                val task = Task()
+                taskListVM.onEvent(TaskEvent.NewTask(task))
+                navController.navigate("edit-task/${task.id}")
+            }
+
         )}
     ) { innerPadding ->
         HorizontalPager(
@@ -68,7 +78,7 @@ fun MainView(
             userScrollEnabled = false
         ) { pageIndex ->
             when (pageIndex){
-                0-> CalendarView()
+                0-> CalendarView(calendarVM,navController)
                 1-> TaskListView(innerPadding,navController,taskListVM)
                 2-> MapsView()
             }
@@ -86,6 +96,7 @@ fun AppScreen(initialPage : Int = 1){
     val pagerState = rememberPagerState(initialPage = initialPage, pageCount = {3})
     val scope = rememberCoroutineScope()
     val taskListVM : TaskListVM = viewModel()
+    val calendarVM : CalendarVM = viewModel()
 
 
 
@@ -101,19 +112,17 @@ fun AppScreen(initialPage : Int = 1){
 
         ){
         composable("main"){
-            MainView(scrollBehavior,pagerState,scope,navController,taskListVM)
+            MainView(scrollBehavior,pagerState,scope,navController,taskListVM,calendarVM)
         }
         composable(
             route = "edit-task/{taskId}",
             arguments = listOf(navArgument("taskId") { type = NavType.IntType })
         ) { backStackEntry ->
             val taskId = backStackEntry.arguments?.getInt("taskId")
-            val task = taskListVM.tasks.value.find { it.id == taskId }
-
             EditView(
                 popBack = { navController.popBackStack() },
                 viewModel = taskListVM,
-                task = task
+                taskId = taskId
             )
         }
 

@@ -21,7 +21,7 @@ private val taskList: MutableList<Task> = mutableListOf(
         description = "45 minutes de cardio et renforcement musculaire.",
         isCompleted = true
     ),
-    Task(
+/*    Task(
         id = 4,
         name = "Lire un livre",
         description = "Lire au moins 20 pages du roman en cours.",
@@ -62,7 +62,7 @@ private val taskList: MutableList<Task> = mutableListOf(
         name = "Réviser le projet Yakak",
         description = "Relire le code et planifier les prochaines fonctionnalités.",
         isCompleted = false
-    ),
+    ),*/
     /*Task(
         id = 11,
         name = "Promener le chien",
