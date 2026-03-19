@@ -1,11 +1,9 @@
 package com.kayak.yakak.ui
 
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -18,6 +16,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -54,32 +54,43 @@ fun MainView(
 
     val title = listOf("Agenda","To-Do List","Maps")
     val subtitle = listOf("","What are you going to do today ?","Where do you need to go ?")
-
+    val selectedDay by calendarVM.selectedDay.collectAsState()
+    val taskCounts by calendarVM.taskCounts.collectAsState()
 
     Scaffold(
         modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = colorScheme.surfaceContainer,
-        topBar = {TopBar(scrollBehavior = scrollBehavior,title = title[pagerState.currentPage],subtitle = subtitle[pagerState.currentPage] )},
+        topBar = {
+            TopBar(
+                scrollBehavior = scrollBehavior,
+                title = if (pagerState.targetPage == 0) selectedDay.month.toString() else title[pagerState.targetPage],
+                subtitle = if (pagerState.targetPage == 0 && taskCounts[selectedDay] != null) taskCounts[selectedDay].toString() + " tasks to do this month"  else subtitle[pagerState.targetPage]
+            )},
         bottomBar = { BottomBar( expanded = true,
+            selectedIndex = pagerState.targetPage,
             onAgendaClick = {scope.launch { pagerState.animateScrollToPage(0)}},
             onTaskListClick = {scope.launch { pagerState.animateScrollToPage(1)}},
             onMapsClick = {scope.launch { pagerState.animateScrollToPage(2)}},
             onAddClick = {
                 val task = Task()
                 taskListVM.onEvent(TaskEvent.NewTask(task))
+                if(pagerState.currentPage == 0){
+                    taskListVM.onEvent(TaskEvent.EditDate(task,selectedDay))
+                }
                 navController.navigate("edit-task/${task.id}")
             }
 
         )}
     ) { innerPadding ->
         HorizontalPager(
+            beyondViewportPageCount = 2,
             state = pagerState,
             modifier = Modifier.padding(innerPadding),
             userScrollEnabled = false
         ) { pageIndex ->
             when (pageIndex){
-                0-> CalendarView(calendarVM,navController)
-                1-> TaskListView(innerPadding,navController,taskListVM)
+                0-> CalendarView(navController, calendarVM)
+                1-> TaskListView(navController,taskListVM)
                 2-> MapsView()
             }
         }
@@ -105,10 +116,23 @@ fun AppScreen(initialPage : Int = 1){
     NavHost(
         navController = navController,
         startDestination = "main",
-        enterTransition = { slideInHorizontally(initialOffsetX = { it }) + scaleIn(initialScale = 0.9f) },
-        exitTransition = { ExitTransition.None},
-        popEnterTransition = { EnterTransition.None},
-        popExitTransition = {slideOutHorizontally(targetOffsetX = { it }) + scaleOut(animationSpec = tween(1000))},
+        enterTransition = {
+            fadeIn(animationSpec = tween(220, delayMillis = 90)) +
+                    scaleIn(
+                        initialScale = 0.92f,
+                        animationSpec = tween(220, delayMillis = 90)
+                    )
+        },
+        exitTransition = {slideOutHorizontally(targetOffsetX = { -it / 4 })},
+        popEnterTransition = {
+            fadeIn(animationSpec = tween(220, delayMillis = 90)) +
+                scaleIn(
+                    initialScale = 0.92f,
+                    animationSpec = tween(220, delayMillis = 90)
+                ) },
+        popExitTransition = {
+            fadeOut(animationSpec = tween(90))
+        },
 
         ){
         composable("main"){

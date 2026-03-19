@@ -70,7 +70,6 @@ class TaskListVM : ViewModel(){
             is TaskEvent.EditLocation -> {
                 TaskRepository.updateTask(event.task.copy(location = event.newLocation))
             }
-            else -> {}
         }
     }
 

@@ -35,8 +35,8 @@ fun TopBar(modifier: Modifier = Modifier, scrollBehavior: TopAppBarScrollBehavio
             containerColor = colorScheme.surfaceContainer,
             titleContentColor = colorScheme.onSurface
         ),
-        scrollBehavior = scrollBehavior
-
+        scrollBehavior = scrollBehavior,
+        modifier = modifier
 
     )
 

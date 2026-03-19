@@ -27,12 +27,21 @@ class CalendarVM : ViewModel(){
     private val _selectedTasks = MutableStateFlow<List<Task>>(emptyList())
     val selectedTasks: StateFlow<List<Task>> = _selectedTasks.asStateFlow()
 
+    private val _taskCounts = MutableStateFlow<Map<LocalDate, Int>>(emptyMap())
+    val taskCounts: StateFlow<Map<LocalDate, Int>> = _taskCounts.asStateFlow()
+
     init {
         viewModelScope.launch {
             TaskRepository.tasks.collect { allTasks ->
-                _selectedTasks.update { currentState ->
+                _selectedTasks.update {
                     allTasks.filter { it.expirationDate == _selectedDay.value && !it.isCompleted}
                 }
+                val countsByDate = allTasks
+                    .filter { !it.isCompleted }
+                    .groupingBy { it.expirationDate }
+                    .eachCount()
+
+                _taskCounts.update { countsByDate }
             }
         }
 
@@ -46,15 +55,18 @@ class CalendarVM : ViewModel(){
             is CalendarEvent.SelectDay -> {
                 _selectedDay.update { event.date }
                 updateTasks()
-                Log.println(Log.INFO,null,"Changed Date to ${_selectedDay.value.toString()}")
+                Log.println(Log.INFO,null,"Changed Date to ${_selectedDay.value}")
             }
             is CalendarEvent.SelectTask -> {
+                val day = TaskRepository.tasks.value.find { it.id == event.task.id }?.expirationDate
+                if(day != null){
+                    _selectedDay.update { day }
+                }
                 updateTasks()
             }
             is CalendarEvent.EditState -> {
                 TaskRepository.updateTask(event.task.copy(isCompleted = event.newState))
             }
-            else -> {}
         }
     }
 

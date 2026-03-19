@@ -9,12 +9,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -26,7 +28,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -49,7 +50,6 @@ fun EditView(
     taskId: Int? = 0,
 ){
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val state by viewModel.uiState.collectAsState()
     val task = TaskRepository.tasks.collectAsState().value.find { it.id == taskId }
     val isDialogOpen = remember { mutableStateOf(false) }
 
@@ -67,6 +67,13 @@ fun EditView(
                     icon = {Icon(Icons.Outlined.Edit, contentDescription = "Finish")},
                     modifier = Modifier.padding(36.dp).align(Alignment.BottomEnd),
                 )
+                FloatingActionButton(
+                    onClick = {popBack()
+                        viewModel.onEvent(TaskEvent.Delete(task))},
+                    content = {Icon(Icons.Outlined.Delete, contentDescription = "Delete")},
+                    modifier = Modifier.padding(36.dp).align(Alignment.BottomStart),
+                    containerColor = colorScheme.error
+                )
             }
             
         }
@@ -80,7 +87,7 @@ fun EditView(
                         isDialogOpen.value = false
 
                     }else{
-                        val newDate =Instant.ofEpochMilli(dateMillis).atZone(ZoneId.systemDefault()).toLocalDate()
+                        val newDate =Instant.ofEpochMilli(dateMillis).atZone(ZoneId.systemDefault()).toLocalDate().plusDays(1)
                         viewModel.onEvent(TaskEvent.EditDate(task,newDate))
                     }
                 },{
@@ -98,14 +105,14 @@ fun EditView(
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth().padding(26.dp,0.dp),
                         value = task.name,
-                        onValueChange = {viewModel?.onEvent(TaskEvent.EditTitle(task,it))},
+                        onValueChange = { viewModel.onEvent(TaskEvent.EditTitle(task,it)) },
                         label = { Text("Title") }
                     )
                     Spacer(Modifier.height(10.dp))
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth().padding(26.dp,0.dp),
                         value = task.description,
-                        onValueChange = {viewModel?.onEvent(TaskEvent.EditDescription(task,it)) },
+                        onValueChange = { viewModel.onEvent(TaskEvent.EditDescription(task,it)) },
                         label = { Text("Description") }
                     )
                     Spacer(Modifier.height(10.dp))

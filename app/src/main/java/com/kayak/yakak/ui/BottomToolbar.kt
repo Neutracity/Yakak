@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Map
@@ -13,37 +16,65 @@ import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BottomBar(
-    expanded: Boolean,
     modifier: Modifier = Modifier,
+    selectedIndex: Int = 1,
+    expanded: Boolean = true,
     onAgendaClick: () -> Unit = {},
     onTaskListClick: () -> Unit = {},
     onMapsClick: () -> Unit = {},
     onAddClick: () -> Unit = {},
 ) {
     val vibrantColors = FloatingToolbarDefaults.vibrantFloatingToolbarColors()
+    val selectedTint = colorScheme.primary
+    val unselectedTint = colorScheme.onSurfaceVariant
+    val haptic = LocalHapticFeedback.current
     Box(
         modifier = modifier.fillMaxWidth().padding(bottom = 30.dp),
         contentAlignment = Alignment.Center
     ){
         HorizontalFloatingToolbar(
-            expanded = true,
+            expanded = expanded,
             content = {
-                IconButton(onClick = onAgendaClick) {
-                    Icon(Icons.Outlined.CalendarMonth, contentDescription = "Agenda")
+                IconButton(onClick = {
+                    onAgendaClick()
+                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                }) {
+                    Icon(
+                        imageVector = if (selectedIndex == 0) Icons.Filled.CalendarMonth else Icons.Outlined.CalendarMonth,
+                        contentDescription = "Agenda",
+                        tint = if (selectedIndex == 0) selectedTint else unselectedTint
+                    )
                 }
-                IconButton(onClick = onTaskListClick) {
-                    Icon(Icons.Outlined.Checklist, contentDescription = "Task List")
+                IconButton(onClick = {
+                    onTaskListClick()
+                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                }) {
+                    Icon(
+                        imageVector = if (selectedIndex == 1) Icons.Filled.Checklist else Icons.Outlined.Checklist,
+                        contentDescription = "Task List",
+                        tint = if (selectedIndex == 1) selectedTint else unselectedTint
+                    )
                 }
-                IconButton(onClick = onMapsClick) {
-                    Icon(Icons.Outlined.Map, contentDescription = "Maps")
+                IconButton(onClick = {
+                    onMapsClick()
+                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                }) {
+                    Icon(
+                        imageVector = if (selectedIndex == 2) Icons.Filled.Map else Icons.Outlined.Map,
+                        contentDescription = "Maps",
+                        tint = if (selectedIndex == 2) selectedTint else unselectedTint
+                    )
                 }
             },
             floatingActionButton = {

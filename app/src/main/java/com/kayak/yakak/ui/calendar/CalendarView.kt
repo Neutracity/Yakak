@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -22,6 +23,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -38,7 +42,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 
 @Composable
-fun CalendarView(calendarVM: CalendarVM = viewModel(),navController : NavController ){
+fun CalendarView(navController: NavController, calendarVM: CalendarVM = viewModel()){
     val currentMonth = remember { YearMonth.now() }
     val startMonth = remember { currentMonth.minusMonths(120) }
     val endMonth = remember { currentMonth.plusMonths(120) }
@@ -47,6 +51,8 @@ fun CalendarView(calendarVM: CalendarVM = viewModel(),navController : NavControl
 
     val selectedDayTasks by calendarVM.selectedTasks.collectAsState()
     val selectedDay by calendarVM.selectedDay.collectAsState()
+
+    val taskCounts by calendarVM.taskCounts.collectAsState()
 
 
 
@@ -66,7 +72,7 @@ fun CalendarView(calendarVM: CalendarVM = viewModel(),navController : NavControl
             HorizontalCalendar(
                 state = state,
                 dayContent = { day ->
-                    Day(day,selectedDay) { calendarVM.onEvent(CalendarEvent.SelectDay(day.date)) }
+                    Day(day,selectedDay,taskCounts[day.date]?:0) { calendarVM.onEvent(CalendarEvent.SelectDay(day.date)) }
                 },
                 monthHeader = { month ->
                     DaysOfWeek(month)
@@ -92,9 +98,7 @@ fun CalendarView(calendarVM: CalendarVM = viewModel(),navController : NavControl
 
 @Composable
 fun DaysOfWeek(month: CalendarMonth){
-    Column(
-
-    ) {
+    Column {
         Text(
             text = month.yearMonth.month.toString(),
             style = MaterialTheme.typography.headlineMedium,
@@ -105,7 +109,7 @@ fun DaysOfWeek(month: CalendarMonth){
             horizontalArrangement = Arrangement.Absolute.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ){
-            val dayList = listOf<String>("Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche")
+            val dayList = listOf("Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche")
             for (day in dayList){
                 Text(
                     text = day,
@@ -120,10 +124,14 @@ fun DaysOfWeek(month: CalendarMonth){
 
 
 @Composable
-fun Day(day : CalendarDay, selectedDay : LocalDate? = null, onClick : () -> Unit = {}){
+fun Day(day : CalendarDay, selectedDay : LocalDate? = null,taskCount : Int = 0 , onClick : () -> Unit = {}){
+    val haptic = LocalHapticFeedback.current
     Box(
-        modifier = Modifier.aspectRatio(1f)
-            .clickable(onClick = onClick),
+        modifier = Modifier.aspectRatio(1f).clip(RoundedCornerShape(10.dp))
+            .clickable(onClick = {
+                onClick()
+                haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+            }),
         contentAlignment = Alignment.Center,
 
     ){
@@ -139,7 +147,16 @@ fun Day(day : CalendarDay, selectedDay : LocalDate? = null, onClick : () -> Unit
                 modifier = Modifier.padding(4.dp)
             )
         }
-        
+        if(taskCount > 0){
+            Badge(
+                modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp),
+            ){
+                Text(
+                    text = taskCount.toString(),
+                )
+            }
+        }
+
     }
 }
 

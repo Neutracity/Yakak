@@ -6,6 +6,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -53,6 +54,6 @@ fun MapsView(modifier: Modifier = Modifier) {
 
     AndroidView(
         factory = { mapView },
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize().clipToBounds()
     )
 }
