@@ -1,10 +1,9 @@
 package com.kayak.yakak.ui
 
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
@@ -116,22 +115,18 @@ fun AppScreen(initialPage : Int = 1){
     NavHost(
         navController = navController,
         startDestination = "main",
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colorScheme.background),
         enterTransition = {
-            fadeIn(animationSpec = tween(220, delayMillis = 90)) +
-                    scaleIn(
-                        initialScale = 0.92f,
-                        animationSpec = tween(220, delayMillis = 90)
-                    )
+            slideInHorizontally(initialOffsetX = { it })
         },
-        exitTransition = {slideOutHorizontally(targetOffsetX = { -it / 4 })},
+        exitTransition = {
+            slideOutHorizontally(targetOffsetX = { -it / 4 })},
         popEnterTransition = {
-            fadeIn(animationSpec = tween(220, delayMillis = 90)) +
-                scaleIn(
-                    initialScale = 0.92f,
-                    animationSpec = tween(220, delayMillis = 90)
-                ) },
+            slideInHorizontally(initialOffsetX = { -it / 4 }) + fadeIn()},
         popExitTransition = {
-            fadeOut(animationSpec = tween(90))
+            slideOutHorizontally(targetOffsetX = { it })
         },
 
         ){

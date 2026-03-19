@@ -38,7 +38,7 @@ class TaskListVM : ViewModel(){
                 _uiState.update { currentState ->
                     currentState.copy(
                         pendingTasks = allTasks.filter { !it.isCompleted },
-                        finishedTasks = allTasks.filter { it.isCompleted }
+                        finishedTasks = allTasks.filter { it.isCompleted }.sortedByDescending { it.finishedDate ?: it.creationDate }
                     )
                 }
             }
@@ -53,7 +53,11 @@ class TaskListVM : ViewModel(){
                 TaskRepository.deleteTask(event.task)
             }
             is TaskEvent.EditState ->{
-                TaskRepository.updateTask(event.task.copy(isCompleted = event.newState))
+                if (event.newState) {
+                    TaskRepository.updateTask(event.task.copy(isCompleted = true, finishedDate = LocalDate.now()))
+                }else{
+                    TaskRepository.updateTask(event.task.copy(isCompleted = false, finishedDate = null))
+                }
             }
             is TaskEvent.EditTitle ->{
                 TaskRepository.updateTask(event.task.copy(name = event.newTitle))

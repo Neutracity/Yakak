@@ -14,6 +14,7 @@ data class Task (
     val isCompleted : Boolean = false,
     val expirationDate: LocalDate = LocalDate.now(),
     val creationDate: LocalDate = LocalDate.now(),
+    val finishedDate: LocalDate? = null,
     val icon: String = "",
     val location : Location = Location(0.0,0.0)
 )

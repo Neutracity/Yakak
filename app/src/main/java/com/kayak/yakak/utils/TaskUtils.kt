@@ -22,7 +22,9 @@ private val taskList: MutableList<Task> = mutableListOf(
         name = "Séance de sport",
         description = "45 minutes de cardio et renforcement musculaire.",
         isCompleted = true,
-        expirationDate = LocalDate.now().plusDays(Random.nextLong(30))
+        expirationDate = LocalDate.now().plusDays(Random.nextLong(30)),
+        finishedDate = LocalDate.now()
+
     ),
     Task(
         id = 4,
@@ -43,21 +45,24 @@ private val taskList: MutableList<Task> = mutableListOf(
         name = "Sortir les poubelles",
         description = "Ne pas oublier les bacs de recyclage ce soir.",
         isCompleted = true,
-        expirationDate = LocalDate.now().plusDays(Random.nextLong(30))
+        expirationDate = LocalDate.now().plusDays(Random.nextLong(30)),
+        finishedDate = LocalDate.now()
     ),
     Task(
         id = 7,
         name = "Préparer le dîner",
         description = "Cuisiner une recette saine pour toute la famille.",
         isCompleted = true,
-        expirationDate = LocalDate.now().plusDays(Random.nextLong(30))
+        expirationDate = LocalDate.now().plusDays(Random.nextLong(30)),
+        finishedDate = LocalDate.now()
     ),
     Task(
         id = 8,
         name = "Arroser les plantes",
         description = "Vérifier l'humidité du terreau pour les plantes du salon.",
         isCompleted = true,
-        expirationDate = LocalDate.now().plusDays(Random.nextLong(30))
+        expirationDate = LocalDate.now().plusDays(Random.nextLong(30)),
+        finishedDate = LocalDate.now()
     ),
     Task(
         id = 9,

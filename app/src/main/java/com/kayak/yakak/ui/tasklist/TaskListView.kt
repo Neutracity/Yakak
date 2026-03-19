@@ -1,7 +1,15 @@
 package com.kayak.yakak.ui.tasklist
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -17,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -47,6 +56,19 @@ fun TaskItem(
 ){
     val shape = if (items == 1) cardShape else if(index == items-1 ) bottomListItemShape  else if (index == 0) topListItemShape else middleListItemShape
     val haptic = LocalHapticFeedback.current
+
+    val visibleState = remember {
+        MutableTransitionState(false).apply {
+            targetState = true 
+        }
+    }
+
+    AnimatedVisibility(
+        visibleState = visibleState,
+        enter = expandVertically(animationSpec = tween(400)) + fadeIn(),
+        exit = shrinkVertically() + fadeOut()
+
+    ) {
     ListItem(
         headlineContent = {
             Text(task.name,
@@ -74,6 +96,7 @@ fun TaskItem(
             }
 
     )
+    }
 }
 
 
@@ -96,14 +119,19 @@ fun TaskListView(navController: NavController,tasks : TaskListVM = viewModel()){
             )
         }
         itemsIndexed(items = pendingTasks, key = null){ index, task ->
-            TaskItem(
-                task = task,
-                index = index,
-                items = pendingTasks.size,
-                onCheck = {tasks.onEvent(TaskEvent.EditState(task,true))},
-                onClick = {navController.navigate("edit-task/${task.id}")}
+            Box(
+                modifier = Modifier.animateItem()
+            ){
+                TaskItem(
+                    task = task,
+                    index = index,
+                    items = pendingTasks.size,
+                    onCheck = {tasks.onEvent(TaskEvent.EditState(task,true))},
+                    onClick = {navController.navigate("edit-task/${task.id}")}
 
-            )
+                )
+            }
+
         }
         item{ Spacer(Modifier.height(10.dp)) }
         item{
@@ -115,14 +143,18 @@ fun TaskListView(navController: NavController,tasks : TaskListVM = viewModel()){
             )
         }
         itemsIndexed(items = finishedTasks, key = null){ index, task ->
+            Box(
+                modifier = Modifier.animateItem()
+            ){
             TaskItem(
                 task = task,
                 index = index,
                 items = pendingTasks.size,
-                onCheck = {tasks.onEvent(TaskEvent.EditState(task,true))},
+                onCheck = {tasks.onEvent(TaskEvent.EditState(task,false))},
                 onClick = {navController.navigate("edit-task/${task.id}")}
 
             )
+            }
         }
     }
 }
