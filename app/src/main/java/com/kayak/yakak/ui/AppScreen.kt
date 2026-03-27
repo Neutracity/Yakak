@@ -4,6 +4,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
@@ -18,14 +19,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.kayak.yakak.Task
@@ -65,34 +69,40 @@ fun MainView(
                 title = if (pagerState.targetPage == 0) selectedDay.month.toString() else title[pagerState.targetPage],
                 subtitle = if (pagerState.targetPage == 0 && taskCounts[selectedDay] != null) taskCounts[selectedDay].toString() + " tasks to do this month"  else subtitle[pagerState.targetPage]
             )},
-        bottomBar = { BottomBar( expanded = true,
-            selectedIndex = pagerState.targetPage,
-            onAgendaClick = {scope.launch { pagerState.animateScrollToPage(0)}},
-            onTaskListClick = {scope.launch { pagerState.animateScrollToPage(1)}},
-            onMapsClick = {scope.launch { pagerState.animateScrollToPage(2)}},
-            onAddClick = {
-                val task = Task()
-                taskListVM.onEvent(TaskEvent.NewTask(task))
-                if(pagerState.currentPage == 0){
-                    taskListVM.onEvent(TaskEvent.EditDate(task,selectedDay))
-                }
-                navController.navigate("edit-task/${task.id}")
-            }
-
-        )}
+        bottomBar = { }
     ) { innerPadding ->
-        HorizontalPager(
-            beyondViewportPageCount = 2,
-            state = pagerState,
-            modifier = Modifier.padding(innerPadding),
-            userScrollEnabled = false
-        ) { pageIndex ->
-            when (pageIndex){
-                0-> CalendarView(navController, calendarVM)
-                1-> TaskListView(navController,taskListVM)
-                2-> MapsView()
+        Box(modifier = Modifier.fillMaxSize()){
+            HorizontalPager(
+                beyondViewportPageCount = 2,
+                state = pagerState,
+                modifier = Modifier.padding(top = innerPadding.calculateTopPadding()),
+                userScrollEnabled = false
+            ) { pageIndex ->
+                when (pageIndex){
+                    0-> CalendarView(navController, calendarVM)
+                    1-> TaskListView(navController,taskListVM)
+                    2-> MapsView()
+                }
             }
+            BottomBar(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                expanded = true,
+                selectedIndex = pagerState.targetPage,
+                onAgendaClick = {scope.launch { pagerState.animateScrollToPage(0)}},
+                onTaskListClick = {scope.launch { pagerState.animateScrollToPage(1)}},
+                onMapsClick = {scope.launch { pagerState.animateScrollToPage(2)}},
+                onAddClick = {
+                    val task = Task()
+                    taskListVM.onEvent(TaskEvent.NewTask(task))
+                    if(pagerState.currentPage == 0){
+                        taskListVM.onEvent(TaskEvent.EditDate(task,selectedDay))
+                    }
+                    navController.navigate("edit-task/${task.id}")
+                }
+
+            )
         }
+
     }
 }
 
@@ -133,9 +143,13 @@ fun AppScreen(initialPage : Int = 1){
         composable("main"){
             MainView(scrollBehavior,pagerState,scope,navController,taskListVM,calendarVM)
         }
-        composable(
+        dialog(
             route = "edit-task/{taskId}",
-            arguments = listOf(navArgument("taskId") { type = NavType.IntType })
+            arguments = listOf(navArgument("taskId") { type = NavType.IntType }),
+
+            dialogProperties = DialogProperties(
+                    usePlatformDefaultWidth = false
+                    )
         ) { backStackEntry ->
             val taskId = backStackEntry.arguments?.getInt("taskId")
             EditView(

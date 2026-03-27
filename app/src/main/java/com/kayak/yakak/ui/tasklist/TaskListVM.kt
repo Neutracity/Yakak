@@ -38,7 +38,11 @@ class TaskListVM : ViewModel(){
                 _uiState.update { currentState ->
                     currentState.copy(
                         pendingTasks = allTasks.filter { !it.isCompleted },
-                        finishedTasks = allTasks.filter { it.isCompleted }.sortedByDescending { it.finishedDate ?: it.creationDate }
+                        finishedTasks = allTasks.filter { it.isCompleted }
+                            .sortedWith(
+                                compareByDescending<Task> { it.finishedDate }
+                                    .thenByDescending { it.id }
+                            )
                     )
                 }
             }

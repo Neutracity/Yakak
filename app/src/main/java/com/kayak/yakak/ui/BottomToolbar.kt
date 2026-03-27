@@ -1,5 +1,7 @@
 package com.kayak.yakak.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -8,18 +10,23 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
@@ -40,7 +47,15 @@ fun BottomBar(
     val unselectedTint = colorScheme.onSurfaceVariant
     val haptic = LocalHapticFeedback.current
     Box(
-        modifier = modifier.fillMaxWidth().padding(bottom = 30.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                brush = Brush.verticalGradient(
+                        0.2f to Color.Transparent,
+                        1.0f to colorScheme.surfaceContainer,
+                )
+            )
+            .padding(bottom = 30.dp),
         contentAlignment = Alignment.Center
     ){
         HorizontalFloatingToolbar(
@@ -78,12 +93,27 @@ fun BottomBar(
                 }
             },
             floatingActionButton = {
-                FloatingToolbarDefaults.VibrantFloatingActionButton(
-                    onClick = onAddClick,
-                    content = {
-                        Icon(Icons.Default.Add, contentDescription = "Add")
+                AnimatedVisibility(
+                   visible = expanded,
+                ) {
+                    if (selectedIndex != 2) {
+                        FloatingActionButton(
+                            onClick = onAddClick,
+                            content = {
+                                Icon(Icons.Default.Add, contentDescription = "Add")
+                            }
+                        )
+                    }else {
+                        LargeFloatingActionButton(
+                            onClick = onAddClick,
+                            content = {
+                                Icon(Icons.Default.MyLocation, contentDescription = "Location")
+                            }
+                        )
                     }
-                )
+                }
+
+
             },
             colors = vibrantColors,
             modifier = modifier
