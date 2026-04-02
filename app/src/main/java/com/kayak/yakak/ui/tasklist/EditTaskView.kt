@@ -28,6 +28,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -36,7 +37,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.kayak.yakak.data.TaskRepository
 import com.kayak.yakak.ui.TopBar
 import java.time.Instant
 import java.time.ZoneId
@@ -50,11 +50,22 @@ fun EditView(
     taskId: Int? = 0,
 ){
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val task = TaskRepository.tasks.collectAsState().value.find { it.id == taskId }
+
+    val uiState by viewModel.uiState.collectAsState()
+    val task = remember(uiState, taskId) {
+        uiState.pendingTasks.find { it.id == taskId }
+            ?: uiState.finishedTasks.find { it.id == taskId }
+    }
+
     val isDialogOpen = remember { mutableStateOf(false) }
 
 
     if(task == null) return
+
+    val nameText = remember(task.id) { mutableStateOf(task.name) }
+    val descriptionText = remember(task.id) { mutableStateOf(task.description) }
+    val isDatePickerOpen = remember { mutableStateOf(false) }
+
     Scaffold(
         modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = colorScheme.surfaceContainer,
@@ -104,19 +115,37 @@ fun EditView(
                 item {
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth().padding(26.dp,0.dp),
-                        value = task.name,
-                        onValueChange = { viewModel.onEvent(TaskEvent.EditTitle(task,it)) },
+                        value = nameText.value,
+                        onValueChange = {
+                            nameText.value = it
+                            viewModel.onEvent(TaskEvent.EditTitle(task,it)) },
                         label = { Text("Title") }
                     )
                     Spacer(Modifier.height(10.dp))
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth().padding(26.dp,0.dp),
-                        value = task.description,
-                        onValueChange = { viewModel.onEvent(TaskEvent.EditDescription(task,it)) },
+                        value = descriptionText.value,
+                        onValueChange = {
+                            descriptionText.value = it
+                            viewModel.onEvent(TaskEvent.EditDescription(task,it)) },
                         label = { Text("Description") }
                     )
                     Spacer(Modifier.height(10.dp))
-                    Text("End Date : ${task.expirationDate}", style = MaterialTheme.typography.headlineSmall, color = colorScheme.onBackground, modifier = Modifier.clickable(onClick = {isDialogOpen.value = true}))
+                    Text(
+                        text = "End Date : ${task.expirationDate}",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = colorScheme.onBackground,
+                        modifier = Modifier.clickable(onClick = {isDialogOpen.value = true})
+                    )
+                    if(task.isCompleted){
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            text = "Finished Date : ${task.finishedDate}",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = colorScheme.onBackground,
+                            modifier = Modifier.clickable(onClick = {isDialogOpen.value = true})
+                        )
+                    }
 
 
 

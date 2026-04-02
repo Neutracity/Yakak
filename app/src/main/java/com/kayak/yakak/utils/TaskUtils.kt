@@ -1,7 +1,8 @@
 package com.kayak.yakak.utils
 
-import com.kayak.yakak.Task
+import com.kayak.yakak.data.Task
 import java.time.LocalDate
+import java.time.LocalDateTime
 import kotlin.random.Random
 
 private val taskList: MutableList<Task> = mutableListOf(
@@ -23,7 +24,7 @@ private val taskList: MutableList<Task> = mutableListOf(
         description = "45 minutes de cardio et renforcement musculaire.",
         isCompleted = true,
         expirationDate = LocalDate.now().plusDays(Random.nextLong(30)),
-        finishedDate = LocalDate.now()
+        finishedDate = LocalDateTime.now()
 
     ),
     Task(
@@ -46,7 +47,7 @@ private val taskList: MutableList<Task> = mutableListOf(
         description = "Ne pas oublier les bacs de recyclage ce soir.",
         isCompleted = true,
         expirationDate = LocalDate.now().plusDays(Random.nextLong(30)),
-        finishedDate = LocalDate.now()
+        finishedDate = LocalDateTime.now()
     ),
     Task(
         id = 7,
@@ -54,7 +55,7 @@ private val taskList: MutableList<Task> = mutableListOf(
         description = "Cuisiner une recette saine pour toute la famille.",
         isCompleted = true,
         expirationDate = LocalDate.now().plusDays(Random.nextLong(30)),
-        finishedDate = LocalDate.now()
+        finishedDate = LocalDateTime.now()
     ),
     Task(
         id = 8,
@@ -62,7 +63,7 @@ private val taskList: MutableList<Task> = mutableListOf(
         description = "Vérifier l'humidité du terreau pour les plantes du salon.",
         isCompleted = true,
         expirationDate = LocalDate.now().plusDays(Random.nextLong(30)),
-        finishedDate = LocalDate.now()
+        finishedDate = LocalDateTime.now()
     ),
     Task(
         id = 9,

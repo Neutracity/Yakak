@@ -1,40 +1,27 @@
 package com.kayak.yakak.data
 
-import com.kayak.yakak.Task
-import com.kayak.yakak.utils.getTaskList
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
+import kotlinx.coroutines.flow.Flow
 
-object TaskRepository {
-    private val _tasks = MutableStateFlow<List<Task>>(emptyList())
-    var tasks: StateFlow<List<Task>> = _tasks.asStateFlow()
+@Singleton
+class TaskRepository @Inject constructor(
+    private val taskDao: TaskDao
+) {
+    val tasks: Flow<List<Task>> = taskDao.getAllTasks()
 
-    init {
-        _tasks.value =  getTaskList()
-    }
 
     // CRUD : Create Read Update Delete
 
-    fun addTask(task : Task){
-        _tasks.update { currentList ->
-            currentList + task
-        }
+    suspend fun addTask(task: Task) {
+        taskDao.insertTask(task)
     }
 
-    fun updateTask(updatedTask : Task){
-        _tasks.update { currentList ->
-            currentList.map{ task ->
-                if (task.id == updatedTask.id) updatedTask else task
-            }
-        }
+    suspend fun updateTask(task: Task) {
+        taskDao.updateTask(task)
     }
 
-    fun deleteTask(task : Task){
-        _tasks.update { currentList ->
-            currentList.filter { it.id != task.id }
-        }
+    suspend fun deleteTask(task: Task) {
+        taskDao.deleteTask(task)
     }
-
 }

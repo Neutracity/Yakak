@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +38,8 @@ import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.CalendarMonth
 import com.kizitonwose.calendar.core.DayPosition
+import com.kizitonwose.calendar.core.yearMonth
+import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -54,7 +57,7 @@ fun CalendarView(navController: NavController, calendarVM: CalendarVM = viewMode
 
     val taskCounts by calendarVM.taskCounts.collectAsState()
 
-
+    val coroutineScope = rememberCoroutineScope()
 
 
 
@@ -72,7 +75,12 @@ fun CalendarView(navController: NavController, calendarVM: CalendarVM = viewMode
             HorizontalCalendar(
                 state = state,
                 dayContent = { day ->
-                    Day(day,selectedDay,taskCounts[day.date]?:0) { calendarVM.onEvent(CalendarEvent.SelectDay(day.date)) }
+                    Day(day,selectedDay,taskCounts[day.date]?:0) {
+                        calendarVM.onEvent(CalendarEvent.SelectDay(day.date))
+                        coroutineScope.launch {
+                            state.animateScrollToMonth(day.date.yearMonth)
+                        }
+                    }
                 },
                 monthHeader = { month ->
                     DaysOfWeek(month)
@@ -127,7 +135,9 @@ fun DaysOfWeek(month: CalendarMonth){
 fun Day(day : CalendarDay, selectedDay : LocalDate? = null,taskCount : Int = 0 , onClick : () -> Unit = {}){
     val haptic = LocalHapticFeedback.current
     Box(
-        modifier = Modifier.aspectRatio(1f).clip(RoundedCornerShape(10.dp))
+        modifier = Modifier
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = {
                 onClick()
                 haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
@@ -136,9 +146,11 @@ fun Day(day : CalendarDay, selectedDay : LocalDate? = null,taskCount : Int = 0 ,
 
     ){
         Surface(
-            modifier = Modifier.fillMaxSize().padding(2.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(2.dp),
             shape = RoundedCornerShape(10.dp),
-            color = if(day.date != selectedDay)  colorScheme.background else colorScheme.onBackground.copy(alpha = 0.1f)
+            color = if(day.date == selectedDay) colorScheme.onBackground.copy(alpha = 0.1f) else if (day.date.month != selectedDay?.month) colorScheme.background.copy(0.3f) else colorScheme.background
         ) {
             Text(
                 text = day.date.dayOfMonth.toString(),
@@ -149,7 +161,9 @@ fun Day(day : CalendarDay, selectedDay : LocalDate? = null,taskCount : Int = 0 ,
         }
         if(taskCount > 0){
             Badge(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(4.dp),
             ){
                 Text(
                     text = taskCount.toString(),

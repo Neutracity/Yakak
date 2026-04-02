@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hiltAndroid)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -19,6 +21,12 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+
+
+    /*ksp {
+        arg("hilt.enableMessagingDestinationsInventory", "false")
+    }*/
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -29,9 +37,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
+
+
     buildFeatures {
         compose = true
     }
@@ -52,8 +62,16 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.ui)
+    implementation(libs.hilt.android)
+    implementation(libs.hilt.navigation.compose)
+    implementation(libs.androidx.compose.animation.core)
+    ksp(libs.hilt.android.compiler)
+    implementation(libs.androidx.room.runtime)
+    ksp("androidx.room:room-compiler:2.8.4")
+    implementation(libs.androidx.room.ktx)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
 
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.core)

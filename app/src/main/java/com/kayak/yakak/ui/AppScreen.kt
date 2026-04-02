@@ -15,16 +15,20 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberWideNavigationRailState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -32,7 +36,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.kayak.yakak.Task
+import com.kayak.yakak.data.Task
 import com.kayak.yakak.ui.calendar.CalendarVM
 import com.kayak.yakak.ui.calendar.CalendarView
 import com.kayak.yakak.ui.maps.MapsView
@@ -42,6 +46,8 @@ import com.kayak.yakak.ui.tasklist.TaskListVM
 import com.kayak.yakak.ui.tasklist.TaskListView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,7 +58,8 @@ fun MainView(
     scope: CoroutineScope,
     navController: NavHostController,
     taskListVM: TaskListVM,
-    calendarVM: CalendarVM
+    calendarVM: CalendarVM,
+    onTopBarClick: () -> Unit = {},
 ){
 
     val title = listOf("Agenda","To-Do List","Maps")
@@ -60,16 +67,44 @@ fun MainView(
     val selectedDay by calendarVM.selectedDay.collectAsState()
     val taskCounts by calendarVM.taskCounts.collectAsState()
 
+    var mapRef by remember { mutableStateOf<MapView?>(null) }
+    var mapLocationOverlay by remember { mutableStateOf<MyLocationNewOverlay?>(null) }
+
+
     Scaffold(
-        modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = colorScheme.surfaceContainer,
         topBar = {
             TopBar(
                 scrollBehavior = scrollBehavior,
                 title = if (pagerState.targetPage == 0) selectedDay.month.toString() else title[pagerState.targetPage],
-                subtitle = if (pagerState.targetPage == 0 && taskCounts[selectedDay] != null) taskCounts[selectedDay].toString() + " tasks to do this month"  else subtitle[pagerState.targetPage]
+                subtitle = if (pagerState.targetPage == 0 && taskCounts[selectedDay] != null) taskCounts[selectedDay].toString() + " tasks to do this month"  else subtitle[pagerState.targetPage],
+                onStartClick = onTopBarClick,
             )},
-        bottomBar = { }
+        bottomBar = { },
+        floatingActionButton = {
+           /* AnimatedVisibility(
+                visible = true,
+            ) {
+                if (pagerState.targetPage != 2) {
+                    FloatingActionButton(
+                        onClick = {},
+                        content = {
+                            Icon(Icons.Default.Add, contentDescription = "Add")
+                        }
+                    )
+                }else {
+                    LargeFloatingActionButton(
+                        onClick = {},
+                        content = {
+                            Icon(Icons.Default.MyLocation, contentDescription = "Location")
+                        }
+                    )
+                }
+            }*/
+        }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()){
             HorizontalPager(
@@ -81,7 +116,12 @@ fun MainView(
                 when (pageIndex){
                     0-> CalendarView(navController, calendarVM)
                     1-> TaskListView(navController,taskListVM)
-                    2-> MapsView()
+                    2-> MapsView(
+                        onMapReady = { map, overlay ->
+                            mapRef = map
+                            mapLocationOverlay = overlay
+                        }
+                    )
                 }
             }
             BottomBar(
@@ -98,6 +138,21 @@ fun MainView(
                         taskListVM.onEvent(TaskEvent.EditDate(task,selectedDay))
                     }
                     navController.navigate("edit-task/${task.id}")
+                },
+                onZoomClick = {
+                    mapLocationOverlay?.let { overlay ->
+                        overlay.enableFollowLocation()
+
+                        mapRef?.let { map ->
+                            val location = overlay.myLocation
+                            if (location != null) {
+                                /*map.controller.animateTo(location)*/
+                                map.controller.zoomTo(18.0,500L)
+                                overlay.enableFollowLocation()
+                            }
+                        }
+                    }
+
                 }
 
             )
@@ -115,51 +170,71 @@ fun AppScreen(initialPage : Int = 1){
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val pagerState = rememberPagerState(initialPage = initialPage, pageCount = {3})
     val scope = rememberCoroutineScope()
-    val taskListVM : TaskListVM = viewModel()
-    val calendarVM : CalendarVM = viewModel()
+    val taskListVM : TaskListVM = hiltViewModel()
+    val calendarVM : CalendarVM = hiltViewModel()
+
+    val drawerState = rememberWideNavigationRailState()
 
 
 
     val navController = rememberNavController()
 
-    NavHost(
-        navController = navController,
-        startDestination = "main",
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colorScheme.background),
-        enterTransition = {
-            slideInHorizontally(initialOffsetX = { it })
-        },
-        exitTransition = {
-            slideOutHorizontally(targetOffsetX = { -it / 4 })},
-        popEnterTransition = {
-            slideInHorizontally(initialOffsetX = { -it / 4 }) + fadeIn()},
-        popExitTransition = {
-            slideOutHorizontally(targetOffsetX = { it })
-        },
-
-        ){
-        composable("main"){
-            MainView(scrollBehavior,pagerState,scope,navController,taskListVM,calendarVM)
+    AppNavigationDrawer(
+        state = drawerState,
+        selectedIndex = pagerState.currentPage,
+        onPageSelected = { index ->
+            scope.launch { pagerState.animateScrollToPage(index) }
         }
-        dialog(
-            route = "edit-task/{taskId}",
-            arguments = listOf(navArgument("taskId") { type = NavType.IntType }),
+    ) {
+        NavHost(
+            navController = navController,
+            startDestination = "main",
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colorScheme.background),
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { it })
+            },
+            exitTransition = {
+                slideOutHorizontally(targetOffsetX = { -it / 4 })
+            },
+            popEnterTransition = {
+                slideInHorizontally(initialOffsetX = { -it / 4 }) + fadeIn()
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { it })
+            },
 
-            dialogProperties = DialogProperties(
+            ) {
+            composable("main") {
+                MainView(
+                    scrollBehavior,
+                    pagerState,
+                    scope,
+                    navController,
+                    taskListVM,
+                    calendarVM,
+                    ({ scope.launch { drawerState.toggle() } })
+                )
+            }
+            dialog(
+                route = "edit-task/{taskId}",
+                arguments = listOf(navArgument("taskId") { type = NavType.IntType }),
+
+                dialogProperties = DialogProperties(
                     usePlatformDefaultWidth = false
-                    )
-        ) { backStackEntry ->
-            val taskId = backStackEntry.arguments?.getInt("taskId")
-            EditView(
-                popBack = { navController.popBackStack() },
-                viewModel = taskListVM,
-                taskId = taskId
-            )
+                )
+            ) { backStackEntry ->
+                val taskId = backStackEntry.arguments?.getInt("taskId")
+                EditView(
+                    popBack = { navController.popBackStack() },
+                    viewModel = taskListVM,
+                    taskId = taskId
+                )
+            }
+
+
         }
-
-
     }
 
 
