@@ -34,7 +34,7 @@ class CalendarVM @Inject constructor(
 
     val selectedTasks: StateFlow<List<Task>> = repository.tasks
         .combine(_selectedDay) { allTasks, day ->
-            allTasks.filter { it.expirationDate == day && !it.isCompleted }
+            allTasks.filter { it.expirationDate.toLocalDate() == day && !it.isCompleted }
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
@@ -45,7 +45,7 @@ class CalendarVM @Inject constructor(
         .combine(MutableStateFlow(Unit)) { allTasks, _ ->
             allTasks
                 .filter { !it.isCompleted && it.expirationDate != null }
-                .groupingBy { it.expirationDate!! }
+                .groupingBy { it.expirationDate.toLocalDate() }
                 .eachCount()
         }.stateIn(
             viewModelScope,
@@ -61,7 +61,7 @@ class CalendarVM @Inject constructor(
             }
             is CalendarEvent.SelectTask -> {
                 event.task.expirationDate?.let { date ->
-                    _selectedDay.update { date }
+                    _selectedDay.update { date.toLocalDate() }
                 }
             }
             is CalendarEvent.EditState -> {

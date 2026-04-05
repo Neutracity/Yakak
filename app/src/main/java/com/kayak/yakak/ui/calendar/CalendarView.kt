@@ -95,7 +95,8 @@ fun CalendarView(navController: NavController, calendarVM: CalendarVM = viewMode
                     index = index,
                     items = selectedDayTasks.size,
                     onCheck = {calendarVM.onEvent(CalendarEvent.EditState(task,true))},
-                    onClick = {navController.navigate("edit-task/${task.id}")},
+                    onClick = {calendarVM.onEvent(CalendarEvent.EditState(task,true))},
+                    onLongClick = {navController.navigate("edit-task/${task.id}")},
                     modifier = Modifier.padding(start = 12.dp, end = 12.dp)
                 )
             }

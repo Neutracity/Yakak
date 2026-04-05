@@ -2,15 +2,24 @@ package com.kayak.yakak.ui.tasklist
 
 
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.exponentialDecay
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
@@ -19,6 +28,7 @@ import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +43,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,6 +67,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -81,6 +93,50 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
+@Composable
+fun ScrollDownIndicator(modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "bounce_transition")
+
+    val offsetY by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 12f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bounce_offset"
+    )
+
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 0.9f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bounce_alpha"
+    )
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .alpha(alpha)
+            .offset(y = offsetY.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Tâches terminées",
+            style = MaterialTheme.typography.labelLarge,
+            color = colorScheme.onSurfaceVariant
+        )
+        Icon(
+            imageVector = Icons.Default.KeyboardArrowDown,
+            contentDescription = "Faire défiler vers le bas",
+            tint = colorScheme.onSurfaceVariant
+        )
+    }
+}
 
 enum class SwipeRevealValue {
     RevealEdit,
@@ -119,7 +175,7 @@ fun TaskItem(
             initialValue = SwipeRevealValue.Resting,
             positionalThreshold = { distance: Float -> distance * 0.5f },
             velocityThreshold = { with(density) { 100.dp.toPx() } },
-            snapAnimationSpec = tween(),
+            snapAnimationSpec = motionScheme.defaultSpatialSpec(),
             decayAnimationSpec = exponentialDecay()
         ).apply {
             updateAnchors(
@@ -134,17 +190,23 @@ fun TaskItem(
 
     val checkScale = remember { Animatable(1f) }
 
+    val isFirstLaunch = remember { mutableStateOf(true) }
+
     LaunchedEffect(localIsCompleted) {
+        if (isFirstLaunch.value) {
+            isFirstLaunch.value = false
+            return@LaunchedEffect
+        }
         if (localIsCompleted) {
-            checkScale.animateTo(1.3f, tween(100))
-            checkScale.animateTo(1f, spring(Spring.DampingRatioHighBouncy, Spring.StiffnessMedium))
+            checkScale.animateTo(2.6f, motionScheme.defaultEffectsSpec())
+            checkScale.animateTo(1f, motionScheme.defaultEffectsSpec())
         } else {
-            checkScale.animateTo(1f, tween(150))
+            checkScale.animateTo(1f, motionScheme.defaultEffectsSpec())
         }
     }
 
     val containerColor by animateColorAsState(
-        targetValue = if (localIsCompleted) colorScheme.surface.copy(0.5f) else colorScheme.surface,
+        targetValue = if (localIsCompleted) colorScheme.surfaceContainer else colorScheme.surface,
         animationSpec = motionScheme.defaultEffectsSpec(),
         label = "color"
     )
@@ -232,7 +294,7 @@ fun TaskItem(
                         checked = localIsCompleted,
                         onCheckedChange = null,
                         colors = CheckboxDefaults.colors(),
-                        modifier = Modifier.scale(checkScale.value)
+                        modifier = Modifier.scale(checkScale.value).rotate((checkScale.value-1)*30)
                     )
                 }
             },
@@ -258,6 +320,8 @@ fun TaskListView(navController: NavController,tasks : TaskListVM = viewModel()){
 
     val listState = rememberLazyListState()
 
+    val haptic = LocalHapticFeedback.current
+
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
             override fun onPostScroll(
@@ -265,49 +329,54 @@ fun TaskListView(navController: NavController,tasks : TaskListVM = viewModel()){
                 available: Offset,
                 source: NestedScrollSource
             ): Offset {
-                if (available.y < -60f) {
+                if (available.y < -40f && !showHiddenItem) {
                     showHiddenItem = true
+                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                 }
-                if (available.y > 60f) showHiddenItem = false
+                if (available.y > 40f && showHiddenItem) {
+                    showHiddenItem = false
+                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                }
                 return Offset.Zero
             }
         }
     }
 
-    LazyColumn(
-        modifier = Modifier.padding(12.dp)
-            .nestedScroll(nestedScrollConnection)
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.padding(12.dp)
+                .nestedScroll(nestedScrollConnection)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
 
-    ){
-        if(pendingTasks.count() > 0){
-            item(-1){
-                Text(
-                    text = "Pending Tasks",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(10.dp,16.dp,10.dp,6.dp).animateItem()
-                )
-            }
-            itemsIndexed(items = pendingTasks,key = { _, task -> task.id } ){ index, task ->
-                TaskItem(
-                    task = task,
-                    index = index,
-                    items = pendingTasks.size,
-                    onClick = {tasks.onEvent(TaskEvent.EditState(task,true))},
-                    onLongClick = {navController.navigate("edit-task/${task.id}")},
-                    onEditSwipe = {navController.navigate("edit-task/${task.id}")},
-                    onDelete = {tasks.onEvent(TaskEvent.Delete(task))},
-                    modifier = Modifier.animateItem()
+            ) {
+            if (pendingTasks.count() > 0) {
+                item(-1) {
+                    Text(
+                        text = "Pending Tasks",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(10.dp, 16.dp, 10.dp, 6.dp).animateItem()
+                    )
+                }
+                itemsIndexed(items = pendingTasks, key = { _, task -> task.id }) { index, task ->
+                    TaskItem(
+                        task = task,
+                        index = index,
+                        items = pendingTasks.size,
+                        onClick = { tasks.onEvent(TaskEvent.EditState(task, true)) },
+                        onLongClick = { navController.navigate("edit-task/${task.id}") },
+                        onEditSwipe = { navController.navigate("edit-task/${task.id}") },
+                        onDelete = { tasks.onEvent(TaskEvent.Delete(task)) },
+                        modifier = Modifier.animateItem()
 
-                )
+                    )
 
-            }
-        }else{
-            item {
-                Spacer(Modifier.height(200.dp))
-                Box(Modifier.fillMaxWidth().animateItem()){
+                }
+            } else {
+                item {
+                    Spacer(Modifier.height(200.dp))
+                    Box(Modifier.fillMaxWidth().animateItem()) {
                         Text(
                             text = "No pending tasks",
                             style = MaterialTheme.typography.displayLargeEmphasized,
@@ -317,38 +386,59 @@ fun TaskListView(navController: NavController,tasks : TaskListVM = viewModel()){
                     }
 
 
+                }
             }
-        }
 
 
 
 
-        if(finishedTasks.count() > 0 && showHiddenItem){
-            item{ Spacer(Modifier.height(10.dp).animateItem()) }
-            item(-2){
-                Text(
-                    text = "Finished Tasks",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = colorScheme.secondary,
-                    modifier = Modifier.padding(10.dp,23.dp,10.dp,6.dp).animateItem()
-                )
+
+
+            if (finishedTasks.count() > 0 && showHiddenItem) {
+                item { Spacer(Modifier.height(10.dp).animateItem()) }
+                item(-2) {
+                    Text(
+                        text = "Finished Tasks",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = colorScheme.secondary,
+                        modifier = Modifier.padding(10.dp, 23.dp, 10.dp, 6.dp).animateItem()
+                    )
+                }
+                itemsIndexed(items = finishedTasks, key = { _, task -> task.id }) { index, task ->
+                    TaskItem(
+                        task = task,
+                        index = index,
+                        items = finishedTasks.size,
+                        onClick = { tasks.onEvent(TaskEvent.EditState(task, false)) },
+                        onLongClick = { navController.navigate("edit-task/${task.id}") },
+                        modifier = Modifier.animateItem()
+                    )
+                }
             }
-            itemsIndexed(items = finishedTasks, key = { _, task -> task.id }){ index, task ->
-                TaskItem(
-                    task = task,
-                    index = index,
-                    items = finishedTasks.size,
-                    onClick = {tasks.onEvent(TaskEvent.EditState(task,false))},
-                    onLongClick = {navController.navigate("edit-task/${task.id}")} ,
-                    modifier = Modifier.animateItem()
-                )
+
+            item {
+                Spacer(modifier = Modifier.height(100.dp))
             }
-        }
 
-        item {
-            Spacer(modifier = Modifier.height(100.dp))
         }
-
+        AnimatedVisibility(
+            visible = finishedTasks.isNotEmpty() && !showHiddenItem,
+            enter = fadeIn() + slideInVertically { it / 2 },
+            exit = fadeOut() + slideOutVertically { it / 2 },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 100.dp)
+        ) {
+            ScrollDownIndicator(
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.medium)
+                    .clickable {
+                        haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                        showHiddenItem = true
+                    }
+                    .padding(8.dp)
+            )
+        }
     }
 }
 

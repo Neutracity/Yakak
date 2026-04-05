@@ -27,7 +27,19 @@ class Converters {
         return date?.toString()
     }
 
-    // Pour Location (on le transforme en String "lat,long")
+    @TypeConverter
+    fun fromFullTimestampList(value: String?): List<LocalDateTime> {
+        if (value.isNullOrBlank()) return emptyList()
+        return value.split(",").map { LocalDateTime.parse(it) }
+    }
+
+    @TypeConverter
+    fun dateToFullTimestampList(date: List<LocalDateTime>?): String {
+        if (date.isNullOrEmpty()) return ""
+        return date.joinToString(",") { it.toString() }
+    }
+
+    // Pour Location (on le transforme en t lat,long")
     @TypeConverter
     fun fromLocation(location: Location): String {
         return "${location.latitude},${location.longitude}"

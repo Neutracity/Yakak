@@ -1,7 +1,6 @@
 package com.kayak.yakak.utils
 
 import com.kayak.yakak.data.Task
-import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.random.Random
 
@@ -23,7 +22,7 @@ private val taskList: MutableList<Task> = mutableListOf(
         name = "Séance de sport",
         description = "45 minutes de cardio et renforcement musculaire.",
         isCompleted = true,
-        expirationDate = LocalDate.now().plusDays(Random.nextLong(30)),
+        expirationDate = LocalDateTime.now().plusDays(Random.nextLong(30)),
         finishedDate = LocalDateTime.now()
 
     ),
@@ -32,21 +31,21 @@ private val taskList: MutableList<Task> = mutableListOf(
         name = "Lire un livre",
         description = "Lire au moins 20 pages du roman en cours.",
         isCompleted = false,
-        expirationDate = LocalDate.now().plusDays(Random.nextLong(30))
+        expirationDate = LocalDateTime.now().plusDays(Random.nextLong(30))
     ),
     Task(
         id = 5,
         name = "Nettoyer la cuisine",
         description = "Vider le lave-vaisselle et nettoyer les plans de travail.",
         isCompleted = false,
-        expirationDate = LocalDate.now().plusDays(Random.nextLong(30))
+        expirationDate = LocalDateTime.now().plusDays(Random.nextLong(30))
     ),
     Task(
         id = 6,
         name = "Sortir les poubelles",
         description = "Ne pas oublier les bacs de recyclage ce soir.",
         isCompleted = true,
-        expirationDate = LocalDate.now().plusDays(Random.nextLong(30)),
+        expirationDate = LocalDateTime.now().plusDays(Random.nextLong(30)),
         finishedDate = LocalDateTime.now()
     ),
     Task(
@@ -54,7 +53,7 @@ private val taskList: MutableList<Task> = mutableListOf(
         name = "Préparer le dîner",
         description = "Cuisiner une recette saine pour toute la famille.",
         isCompleted = true,
-        expirationDate = LocalDate.now().plusDays(Random.nextLong(30)),
+        expirationDate = LocalDateTime.now().plusDays(Random.nextLong(30)),
         finishedDate = LocalDateTime.now()
     ),
     Task(
@@ -62,7 +61,7 @@ private val taskList: MutableList<Task> = mutableListOf(
         name = "Arroser les plantes",
         description = "Vérifier l'humidité du terreau pour les plantes du salon.",
         isCompleted = true,
-        expirationDate = LocalDate.now().plusDays(Random.nextLong(30)),
+        expirationDate = LocalDateTime.now().plusDays(Random.nextLong(30)),
         finishedDate = LocalDateTime.now()
     ),
     Task(
@@ -70,16 +69,16 @@ private val taskList: MutableList<Task> = mutableListOf(
         name = "Méditation",
         description = "10 minutes de pleine conscience pour se relaxer.",
         isCompleted = false,
-        expirationDate = LocalDate.now().plusDays(Random.nextLong(30))
+        expirationDate = LocalDateTime.now().plusDays(Random.nextLong(30))
     ),
     Task(
         id = 10,
         name = "Réviser le projet Yakak",
         description = "Relire le code et planifier les prochaines fonctionnalités.",
         isCompleted = false,
-        expirationDate = LocalDate.now().plusDays(Random.nextLong(30))
+        expirationDate = LocalDateTime.now().plusDays(Random.nextLong(30))
     ),
-    /*Task(
+    Task(
         id = 11,
         name = "Promener le chien",
         description = "30 minutes de promenade dans le parc.",
@@ -138,7 +137,7 @@ private val taskList: MutableList<Task> = mutableListOf(
         name = "Planifier le week-end",
         description = "Décider des activités et des sorties pour le week-end.",
         isCompleted = false
-    )*/
+    )
 )
 
 fun getTaskList(): List<Task> {

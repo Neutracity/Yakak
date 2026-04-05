@@ -48,6 +48,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -134,8 +136,9 @@ fun MainView(
                 onAddClick = {
                     val task = Task()
                     taskListVM.onEvent(TaskEvent.NewTask(task))
+                    val newday = LocalDateTime.of(selectedDay, LocalTime.NOON)
                     if(pagerState.currentPage == 0){
-                        taskListVM.onEvent(TaskEvent.EditDate(task,selectedDay))
+                        taskListVM.onEvent(TaskEvent.EditDate(task,newday))
                     }
                     navController.navigate("edit-task/${task.id}")
                 },
@@ -179,6 +182,7 @@ fun AppScreen(initialPage : Int = 1){
 
     val navController = rememberNavController()
 
+    NotificationPermissionRequest()
     AppNavigationDrawer(
         state = drawerState,
         selectedIndex = pagerState.currentPage,

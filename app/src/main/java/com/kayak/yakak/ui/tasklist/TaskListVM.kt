@@ -5,24 +5,26 @@ import androidx.lifecycle.viewModelScope
 import com.kayak.yakak.data.Location
 import com.kayak.yakak.data.Task
 import com.kayak.yakak.data.TaskRepository
+import com.kayak.yakak.utils.ReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import java.time.LocalDateTime
+import javax.inject.Inject
 
 sealed class TaskEvent {
     data class Delete(val task: Task) : TaskEvent()
     data class EditState(val task: Task,val newState: Boolean) : TaskEvent()
     data class EditTitle(val task: Task,val newTitle: String) : TaskEvent()
     data class EditDescription(val task: Task,val newDescription: String) : TaskEvent()
-    data class EditDate(val task: Task,val newDate: LocalDate) : TaskEvent()
+    data class EditDate(val task: Task,val newDate: LocalDateTime) : TaskEvent()
     data class EditLocation(val task: Task, val newLocation: Location) : TaskEvent()
     data class NewTask(val task: Task) : TaskEvent()
+
+    data class EditTask(val task: Task) : TaskEvent()
 
 }
 
@@ -32,7 +34,8 @@ data class TaskListUiState(
 )
 @HiltViewModel
 class TaskListVM @Inject constructor(
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val reminderScheduler: ReminderScheduler
 ): ViewModel(){
     private val _uiState = MutableStateFlow(TaskListUiState())
     var uiState: StateFlow<TaskListUiState> = _uiState.asStateFlow()
@@ -59,12 +62,18 @@ class TaskListVM @Inject constructor(
         viewModelScope.launch {
             when (event){
                 is TaskEvent.Delete ->{
+                    event.task.reminderList.forEach { time ->
+                        reminderScheduler.cancel(event.task, time)
+                    }
                     taskRepository.deleteTask(event.task)
                 }
                 is TaskEvent.EditState ->{
                     if (event.newState) {
+                        event.task.reminderList.forEach { time ->
+                            reminderScheduler.cancel(event.task, time)
+                        }
                         taskRepository.updateTask(event.task.copy(isCompleted = true, finishedDate = LocalDateTime.now()))
-                    }else{
+                    } else {
                         taskRepository.updateTask(event.task.copy(isCompleted = false, finishedDate = null))
                     }
                 }
@@ -75,6 +84,11 @@ class TaskListVM @Inject constructor(
                     taskRepository.updateTask(event.task.copy(description = event.newDescription))
                 }
                 is TaskEvent.NewTask ->{
+                    event.task.reminderList.forEach { time ->
+                        if (time.isAfter(LocalDateTime.now())) {
+                            reminderScheduler.schedule(event.task, time)
+                        }
+                    }
                     taskRepository.addTask(event.task)
                 }
                 is TaskEvent.EditDate -> {
@@ -83,6 +97,15 @@ class TaskListVM @Inject constructor(
                 is TaskEvent.EditLocation -> {
                     taskRepository.updateTask(event.task.copy(location = event.newLocation))
                 }
+                is TaskEvent.EditTask -> {
+                    event.task.reminderList.forEach { time ->
+                        if (time.isAfter(LocalDateTime.now())) {
+                            reminderScheduler.schedule(event.task, time)
+                        }
+                    }
+                    taskRepository.updateTask(event.task)
+                }
+
             }
         }
 
