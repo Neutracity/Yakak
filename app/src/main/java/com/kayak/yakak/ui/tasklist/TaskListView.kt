@@ -1,9 +1,5 @@
 package com.kayak.yakak.ui.tasklist
 
-
-
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -13,10 +9,6 @@ import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,6 +21,8 @@ import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -41,12 +35,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.outlined.Celebration
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -70,78 +68,69 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.kayak.yakak.data.RecurrenceFrequency
 import com.kayak.yakak.data.Task
 import com.kayak.yakak.ui.theme.YKShapeDefaults.bottomListItemShape
 import com.kayak.yakak.ui.theme.YKShapeDefaults.cardShape
 import com.kayak.yakak.ui.theme.YKShapeDefaults.middleListItemShape
 import com.kayak.yakak.ui.theme.YKShapeDefaults.topListItemShape
-import com.kayak.yakak.utils.getTaskList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
+enum class SwipeRevealValue { RevealEdit, Resting, RevealDelete }
+
 @Composable
-fun ScrollDownIndicator(modifier: Modifier = Modifier) {
-    val infiniteTransition = rememberInfiniteTransition(label = "bounce_transition")
-
-    val offsetY by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 12f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "bounce_offset"
+fun ScrollDownIndicator(progress: Float, modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "bounce")
+    val bounceY by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = 8f,
+        animationSpec = infiniteRepeatable(tween(1200, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "bounceY"
     )
-
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.5f,
-        targetValue = 0.9f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "bounce_alpha"
-    )
-
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .alpha(alpha)
-            .offset(y = offsetY.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = 12.dp).alpha((0.6f + progress * 0.4f).coerceIn(0f, 1f)).scale((1f + progress * 0.25f).coerceIn(0f, 1.5f)).offset(y = (if (progress > 0) progress else bounceY).dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Tâches terminées",
-            style = MaterialTheme.typography.labelLarge,
-            color = colorScheme.onSurfaceVariant
-        )
-        Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
-            contentDescription = "Faire défiler vers le bas",
-            tint = colorScheme.onSurfaceVariant
-        )
+        Text("Tâches terminées", style = MaterialTheme.typography.labelLarge, color = colorScheme.onSurfaceVariant)
+        Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, modifier = Modifier.rotate(progress * 180f), tint = colorScheme.onSurfaceVariant)
     }
 }
 
-enum class SwipeRevealValue {
-    RevealEdit,
-    Resting,
-    RevealDelete
+@Composable
+fun BirthdayItem(task: Task, onClick: () -> Unit = {}) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp).clickable { onClick() },
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(containerColor = colorScheme.primaryContainer.copy(alpha = 0.9f), contentColor = colorScheme.onPrimaryContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    ) {
+        Row(modifier = Modifier.padding(20.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Box(modifier = Modifier.size(64.dp).clip(MaterialTheme.shapes.large).background(colorScheme.surface)) {
+                Icon(Icons.Default.Cake, contentDescription = null, modifier = Modifier.align(Alignment.Center).size(36.dp), tint = colorScheme.primary)
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = "Anniversaire de ${task.name}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
+                Text(text = "C'est sa journée spéciale ! 🎂✨", style = MaterialTheme.typography.bodyLarge)
+            }
+            Icon(Icons.Outlined.Celebration, contentDescription = null, modifier = Modifier.size(40.dp))
+        }
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -151,303 +140,231 @@ fun TaskItem(
     modifier: Modifier = Modifier,
     items: Int = 0,
     index: Int = 0,
-    onCheck: () -> Unit = {},
+    showDate: Boolean = true,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {},
-    onDoubleClick: () -> Unit = {},
     onDelete: () -> Unit = {},
     onEditSwipe: () -> Unit = {}
 ) {
     val shape = if (items == 1) cardShape else if (index == items - 1) bottomListItemShape else if (index == 0) topListItemShape else middleListItemShape
     val haptic = LocalHapticFeedback.current
-    val motionScheme = motionScheme
     val density = LocalDensity.current
     val coroutineScope = rememberCoroutineScope()
-
-    val menuWidth = 80.dp
-    val menuWidthPx = with(density) { menuWidth.toPx() }
+    val menuWidthPx = with(density) { 80.dp.toPx() }
 
     var localIsCompleted by remember(task.isCompleted) { mutableStateOf(task.isCompleted) }
     var isWaiting by remember { mutableStateOf(false) }
 
-    val dragState = remember {
+    val spatialSpec = motionScheme.defaultSpatialSpec<Float>()
+    val effectsSpec = motionScheme.defaultEffectsSpec<Float>()
+
+    val isFirstLaunch = remember { mutableStateOf(true) }
+
+    val dragState = remember(spatialSpec) {
         AnchoredDraggableState(
             initialValue = SwipeRevealValue.Resting,
-            positionalThreshold = { distance: Float -> distance * 0.5f },
+            positionalThreshold = { it * 0.5f },
             velocityThreshold = { with(density) { 100.dp.toPx() } },
-            snapAnimationSpec = motionScheme.defaultSpatialSpec(),
+            snapAnimationSpec = spatialSpec,
             decayAnimationSpec = exponentialDecay()
         ).apply {
-            updateAnchors(
-                DraggableAnchors {
-                    SwipeRevealValue.RevealEdit at menuWidthPx
-                    SwipeRevealValue.Resting at 0f
-                    SwipeRevealValue.RevealDelete at -menuWidthPx
-                }
-            )
+            updateAnchors(DraggableAnchors {
+                SwipeRevealValue.RevealEdit at menuWidthPx
+                SwipeRevealValue.Resting at 0f
+                SwipeRevealValue.RevealDelete at -menuWidthPx
+            })
         }
     }
 
     val checkScale = remember { Animatable(1f) }
-
-    val isFirstLaunch = remember { mutableStateOf(true) }
-
     LaunchedEffect(localIsCompleted) {
         if (isFirstLaunch.value) {
             isFirstLaunch.value = false
             return@LaunchedEffect
         }
         if (localIsCompleted) {
-            checkScale.animateTo(2.6f, motionScheme.defaultEffectsSpec())
-            checkScale.animateTo(1f, motionScheme.defaultEffectsSpec())
-        } else {
-            checkScale.animateTo(1f, motionScheme.defaultEffectsSpec())
+            checkScale.animateTo(2.6f, effectsSpec)
+            checkScale.animateTo(1f, effectsSpec)
         }
     }
 
-    val containerColor by animateColorAsState(
-        targetValue = if (localIsCompleted) colorScheme.surfaceContainer else colorScheme.surface,
-        animationSpec = motionScheme.defaultEffectsSpec(),
-        label = "color"
-    )
-
-    val contentAlpha by animateFloatAsState(
-        targetValue = if (localIsCompleted) 0.35f else 1f,
-        animationSpec = motionScheme.defaultEffectsSpec(),
-        label = "alpha"
-    )
+    val contentAlpha by animateFloatAsState(if (localIsCompleted) 0.35f else 1f, label = "alpha")
 
     Box(modifier = modifier.clip(shape)) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(colorScheme.surfaceVariant)
-        ) {
-            IconButton(
-                onClick = {
-                    coroutineScope.launch { dragState.animateTo(SwipeRevealValue.Resting) }
-                    onEditSwipe()
-                },
-                modifier = Modifier.align(Alignment.CenterStart).width(menuWidth)
-            ) {
+        Box(modifier = Modifier.matchParentSize().background(colorScheme.surfaceVariant)) {
+            IconButton(onClick = { coroutineScope.launch { dragState.animateTo(SwipeRevealValue.Resting) }; onEditSwipe() }, modifier = Modifier.align(Alignment.CenterStart).width(80.dp)) {
                 Icon(Icons.Default.Edit, contentDescription = null, tint = colorScheme.primary)
             }
-
-            IconButton(
-                onClick = { onDelete() },
-                modifier = Modifier.align(Alignment.CenterEnd).width(menuWidth)
-            ) {
+            IconButton(onClick = onDelete, modifier = Modifier.align(Alignment.CenterEnd).width(80.dp)) {
                 Icon(Icons.Default.Delete, contentDescription = null, tint = colorScheme.error)
             }
         }
 
         ListItem(
             headlineContent = {
-                Text(
-                    task.name,
-                    textDecoration = if (localIsCompleted) TextDecoration.LineThrough else null,
-                    modifier = Modifier.alpha(contentAlpha)
-                )
-            },
-            supportingContent = {
-                Text(
-                    task.description,
-                    textDecoration = if (localIsCompleted) TextDecoration.LineThrough else null,
-                    modifier = Modifier.alpha(contentAlpha)
-                )
-            },
-            colors = ListItemDefaults.colors(containerColor = containerColor),
-            modifier = Modifier
-                .offset {
-                    IntOffset(
-                        x = if (dragState.offset.isNaN()) 0 else dragState.offset.roundToInt(),
-                        y = 0
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(task.name, textDecoration = if (localIsCompleted) TextDecoration.LineThrough else null, modifier = Modifier.alpha(contentAlpha))
+                    if (task.recurrence != RecurrenceFrequency.NONE && !localIsCompleted && task.streakCount > 0) {
+                        Spacer(Modifier.width(8.dp))
+                        Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = Color(0xFFFF9800), modifier = Modifier.size(16.dp))
+                        Text("Streak ${task.streakCount}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFFF9800), fontWeight = FontWeight.Bold)
+                    }
                 }
-                .anchoredDraggable(state = dragState, orientation = Orientation.Horizontal)
+            },
+            supportingContent = { Text(task.description, textDecoration = if (localIsCompleted) TextDecoration.LineThrough else null, modifier = Modifier.alpha(contentAlpha)) },
+            colors = ListItemDefaults.colors(containerColor = if (localIsCompleted) colorScheme.surfaceContainer else colorScheme.surface),
+            modifier = Modifier.offset { IntOffset(if (dragState.offset.isNaN()) 0 else dragState.offset.roundToInt(), 0) }
+                .anchoredDraggable(dragState, Orientation.Horizontal)
                 .combinedClickable(
-                    onClick = {
-                        if (!isWaiting) {
-                            isWaiting = true
-                            localIsCompleted = !localIsCompleted
-                            haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-
-                            coroutineScope.launch {
-                                delay(500)
-                                onClick()
-                                isWaiting = false
-                            }
-                        }
-                    },
-                    onLongClick = {
-                        onLongClick()
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    },
-                    onDoubleClick = { onDoubleClick() }
+                    onClick = { if (!isWaiting) { isWaiting = true; localIsCompleted = !localIsCompleted; haptic.performHapticFeedback(HapticFeedbackType.ContextClick); coroutineScope.launch { delay(500); onClick(); isWaiting = false } } },
+                    onLongClick = { onLongClick(); haptic.performHapticFeedback(HapticFeedbackType.LongPress) }
                 ),
             leadingContent = {
-                Box(
-                    modifier = Modifier.size(46.dp, 68.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Checkbox(
-                        checked = localIsCompleted,
-                        onCheckedChange = null,
-                        colors = CheckboxDefaults.colors(),
-                        modifier = Modifier.scale(checkScale.value).rotate((checkScale.value-1)*30)
-                    )
+                Box(modifier = Modifier.size(46.dp, 68.dp), contentAlignment = Alignment.Center) {
+                    Checkbox(checked = localIsCompleted, onCheckedChange = null, modifier = Modifier.scale(checkScale.value).rotate((checkScale.value - 1) * 30))
                 }
             },
             trailingContent = {
-                Text(
-                    text = task.expirationDate.dayOfMonth.toString() + " " + task.expirationDate.month.toString(),
-                    modifier = Modifier.alpha(contentAlpha)
-                )
+                Column(horizontalAlignment = Alignment.End) {
+                    if (showDate) {
+                        Text(text = "${task.expirationDate.dayOfMonth} ${task.expirationDate.month.toString().take(3)}", modifier = Modifier.alpha(contentAlpha))
+                    }
+                    if (!task.isAllDay) {
+                        Text(text = task.expirationDate.format(DateTimeFormatter.ofPattern("HH:mm")), style = MaterialTheme.typography.labelSmall, modifier = Modifier.alpha(contentAlpha * 0.7f))
+                    }
+                }
             }
         )
     }
 }
 
-
-
 @Composable
-fun TaskListView(navController: NavController,tasks : TaskListVM = viewModel()){
+fun TaskListView(navController: NavController, tasks: TaskListVM = viewModel()) {
     val state by tasks.uiState.collectAsState()
-    val pendingTasks = state.pendingTasks
+    val birthdays = state.birthdaysToday
+    val mixOfDay = state.mixOfTheDay
+    val upcoming = state.upcomingTasks
     val finishedTasks = state.finishedTasks
 
     var showHiddenItem by remember { mutableStateOf(false) }
-
+    var pullAmount by remember { mutableStateOf(0f) }
     val listState = rememberLazyListState()
-
     val haptic = LocalHapticFeedback.current
 
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource
-            ): Offset {
-                if (available.y < -40f && !showHiddenItem) {
-                    showHiddenItem = true
-                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                }
-                if (available.y > 40f && showHiddenItem) {
-                    showHiddenItem = false
-                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (pullAmount > 0 && available.y > 0) {
+                    val consumed = available.y.coerceAtMost(pullAmount)
+                    pullAmount -= consumed
+                    return Offset(0f, consumed)
                 }
                 return Offset.Zero
             }
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                // Only trigger with UserInput (drag) to prevent fast fling triggers
+                if (!showHiddenItem && source == NestedScrollSource.UserInput && available.y < 0 && !listState.canScrollForward && finishedTasks.isNotEmpty()) {
+                    val oldAmount = pullAmount
+                    pullAmount = (pullAmount - available.y * 0.5f).coerceAtMost(240f)
+                    if ((pullAmount / 35f).toInt() > (oldAmount / 35f).toInt()) haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                    if (pullAmount >= 180f) { showHiddenItem = true; pullAmount = 0f; haptic.performHapticFeedback(HapticFeedbackType.LongPress) }
+                    return Offset(0f, available.y)
+                }
+                if (showHiddenItem && available.y > 60f && !listState.canScrollBackward) { showHiddenItem = false; haptic.performHapticFeedback(HapticFeedbackType.ContextClick) }
+                return Offset.Zero
+            }
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                if (!showHiddenItem && pullAmount > 0) {
+                    pullAmount = 0f
+                }
+                return super.onPostFling(consumed, available)
+            }
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().nestedScroll(nestedScrollConnection)) {
         LazyColumn(
-            modifier = Modifier.padding(12.dp)
-                .nestedScroll(nestedScrollConnection)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            if (birthdays.isNotEmpty()) {
+                item { Text("Anniversaires", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
+                items(birthdays.size, key = { index -> "bday_${birthdays[index].id}" }) { index ->
+                    BirthdayItem(
+                        task = birthdays[index],
+                        onClick = { navController.navigate("edit-birthday/${birthdays[index].id}") }
+                    ) }
+                item { Spacer(Modifier.height(16.dp)) }
+            }
 
-            ) {
-            if (pendingTasks.count() > 0) {
-                item(-1) {
-                    Text(
-                        text = "Pending Tasks",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(10.dp, 16.dp, 10.dp, 6.dp).animateItem()
-                    )
-                }
-                itemsIndexed(items = pendingTasks, key = { _, task -> task.id }) { index, task ->
+            if (mixOfDay.isNotEmpty()) {
+                item { Text("Mix du jour", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
+                itemsIndexed(mixOfDay, key = { _, task -> "mix_${task.id}" }) { index, task ->
                     TaskItem(
                         task = task,
+                        items = mixOfDay.size,
                         index = index,
-                        items = pendingTasks.size,
+                        showDate = false,
                         onClick = { tasks.onEvent(TaskEvent.EditState(task, true)) },
                         onLongClick = { navController.navigate("edit-task/${task.id}") },
-                        onEditSwipe = { navController.navigate("edit-task/${task.id}") },
                         onDelete = { tasks.onEvent(TaskEvent.Delete(task)) },
-                        modifier = Modifier.animateItem()
-
+                        modifier = Modifier.animateItem(),
+                        onEditSwipe = { navController.navigate("edit-task/${task.id}") }
                     )
-
                 }
-            } else {
-                item {
-                    Spacer(Modifier.height(200.dp))
-                    Box(Modifier.fillMaxWidth().animateItem()) {
-                        Text(
-                            text = "No pending tasks",
-                            style = MaterialTheme.typography.displayLargeEmphasized,
-                            textAlign = TextAlign.Center
-                        )
-
-                    }
-
-
-                }
+                item { Spacer(Modifier.height(16.dp)) }
             }
 
-
-
-
-
-
-            if (finishedTasks.count() > 0 && showHiddenItem) {
-                item { Spacer(Modifier.height(10.dp).animateItem()) }
-                item(-2) {
-                    Text(
-                        text = "Finished Tasks",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = colorScheme.secondary,
-                        modifier = Modifier.padding(10.dp, 23.dp, 10.dp, 6.dp).animateItem()
-                    )
-                }
-                itemsIndexed(items = finishedTasks, key = { _, task -> task.id }) { index, task ->
+            if (upcoming.isNotEmpty()) {
+                item { Text("À venir", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
+                itemsIndexed(upcoming, key = { _, task -> "up_${task.id}" }) { index, task ->
                     TaskItem(
                         task = task,
+                        items = upcoming.size,
                         index = index,
-                        items = finishedTasks.size,
-                        onClick = { tasks.onEvent(TaskEvent.EditState(task, false)) },
+                        onClick = { tasks.onEvent(TaskEvent.EditState(task, true)) },
                         onLongClick = { navController.navigate("edit-task/${task.id}") },
-                        modifier = Modifier.animateItem()
+                        onDelete = { tasks.onEvent(TaskEvent.Delete(task)) },
+                        modifier = Modifier.animateItem(),
+                        onEditSwipe = { navController.navigate("edit-task/${task.id}") }
                     )
                 }
             }
 
-            item {
-                Spacer(modifier = Modifier.height(100.dp))
-            }
-
-        }
-        AnimatedVisibility(
-            visible = finishedTasks.isNotEmpty() && !showHiddenItem,
-            enter = fadeIn() + slideInVertically { it / 2 },
-            exit = fadeOut() + slideOutVertically { it / 2 },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 100.dp)
-        ) {
-            ScrollDownIndicator(
-                modifier = Modifier
-                    .clip(MaterialTheme.shapes.medium)
-                    .clickable {
-                        haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                        showHiddenItem = true
+            if (finishedTasks.isNotEmpty() && showHiddenItem) {
+                // Add space before the "Tâches terminées" header
+                item { Spacer(Modifier.height(32.dp)) }
+                item {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)) {
+                        Text("Tâches terminées", style = MaterialTheme.typography.titleMedium, color = colorScheme.onSurfaceVariant)
+                        IconButton(onClick = { showHiddenItem = false }) { Icon(Icons.Default.KeyboardArrowUp, contentDescription = null) }
                     }
-                    .padding(8.dp)
+                }
+                itemsIndexed(finishedTasks, key = { _, task -> "fin_${task.id}" }) { index, task ->
+                    TaskItem(
+                        task = task,
+                        items = finishedTasks.size,
+                        index = index,
+                        onClick = { tasks.onEvent(TaskEvent.EditState(task, false)) },
+                        onLongClick = { navController.navigate("edit-task/${task.id}") },
+                        onDelete = { tasks.onEvent(TaskEvent.Delete(task)) },
+                        onEditSwipe = { navController.navigate("edit-task/${task.id}") },
+                        modifier = Modifier.animateItem(),
+                    )
+                }
+            }
+            // Increased spacer height and made it an item that is always present to ensure scrollability
+            item { Spacer(Modifier.height(160.dp)) }
+        }
+
+
+        if (!showHiddenItem && finishedTasks.isNotEmpty()) {
+            ScrollDownIndicator(
+                progress = (pullAmount / 180f).coerceIn(0f, 1f),
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 106.dp)
             )
         }
     }
-}
-
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
-@Composable
-fun Preview(){
-    TaskItem(getTaskList()[0])
-
 }

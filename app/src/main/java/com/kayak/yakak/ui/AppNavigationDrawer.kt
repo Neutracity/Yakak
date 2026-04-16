@@ -39,6 +39,8 @@ fun AppNavigationDrawer(
     state: WideNavigationRailState,
     selectedIndex: Int,
     onPageSelected: (Int) -> Unit,
+    onAboutClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {},
     content: @Composable () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -73,6 +75,10 @@ fun AppNavigationDrawer(
                                 state.collapse()
                                 if (item.index != -1) {
                                     onPageSelected(item.index)
+                                } else if (item.label == "About") {
+                                    onAboutClick()
+                                }else if (item.label == "Settings") {
+                                    onSettingsClick()
                                 }
                             }
                         },

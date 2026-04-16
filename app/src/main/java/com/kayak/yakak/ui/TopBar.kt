@@ -7,13 +7,14 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -22,11 +23,11 @@ fun TopBar(
     scrollBehavior: TopAppBarScrollBehavior,
     title: String = "",
     subtitle: String = "",
+    navigationIcon: ImageVector = Icons.Outlined.Menu,
     onStartClick: () -> Unit = {}
 ){
-    LargeFlexibleTopAppBar(
+    TopAppBar(
         title = { Text(title)},
-        subtitle = { Text(subtitle)},
         navigationIcon = {
             IconButton(
                 onClick = onStartClick,
@@ -35,7 +36,7 @@ fun TopBar(
                     contentColor = colorScheme.onSurface
                 )
 
-            ) { Icon(Icons.Outlined.Menu,contentDescription = "Menu") }
+            ) { Icon(navigationIcon,contentDescription = "Navigation Icon") }
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = colorScheme.surfaceContainer,

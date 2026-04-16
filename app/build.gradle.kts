@@ -15,8 +15,8 @@ android {
         applicationId = "com.kayak.yakak"
         minSdk = 36
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 4
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -34,6 +34,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -65,6 +66,7 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.compose.animation.core)
+    implementation(libs.coil.compose)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.room.runtime)
     ksp("androidx.room:room-compiler:2.8.4")

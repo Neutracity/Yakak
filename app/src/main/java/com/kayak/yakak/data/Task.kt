@@ -6,6 +6,10 @@ import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 import kotlin.random.Random
 
+enum class RecurrenceFrequency {
+    NONE, DAILY, WEEKLY, MONTHLY, YEARLY
+}
+
 data class Location(
     val latitude: Double,
     val longitude: Double,
@@ -24,5 +28,13 @@ data class Task (
     val reminderList: List<LocalDateTime> = emptyList(),
     val icon: String = "",
     @Embedded
-    val location: Location = Location(0.0,0.0)
+    val location: Location = Location(0.0,0.0),
+    
+    val isBirthday: Boolean = false,
+    val recurrence: RecurrenceFrequency = RecurrenceFrequency.NONE,
+    val streakCount: Int = 0,
+    val lastCompletedDate: LocalDateTime? = null,
+    val profileImageUri: String? = null,
+    val showInCalendar: Boolean = true,
+    val isAllDay: Boolean = true
 )

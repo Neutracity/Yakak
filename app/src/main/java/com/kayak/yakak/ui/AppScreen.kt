@@ -1,23 +1,40 @@
 package com.kayak.yakak.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberWideNavigationRailState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,8 +42,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -36,15 +55,21 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.kayak.yakak.data.RecurrenceFrequency
 import com.kayak.yakak.data.Task
+import com.kayak.yakak.ui.calc.CalcView
 import com.kayak.yakak.ui.calendar.CalendarVM
 import com.kayak.yakak.ui.calendar.CalendarView
 import com.kayak.yakak.ui.maps.MapsView
+import com.kayak.yakak.ui.settings.SettingsView
+import com.kayak.yakak.ui.settings.permissions.PermissionsView
+import com.kayak.yakak.ui.tasklist.EditBirthdayView
 import com.kayak.yakak.ui.tasklist.EditView
 import com.kayak.yakak.ui.tasklist.TaskEvent
 import com.kayak.yakak.ui.tasklist.TaskListVM
 import com.kayak.yakak.ui.tasklist.TaskListView
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
@@ -64,10 +89,26 @@ fun MainView(
     onTopBarClick: () -> Unit = {},
 ){
 
-    val title = listOf("Agenda","To-Do List","Maps")
-    val subtitle = listOf("","What are you going to do today ?","Where do you need to go ?")
+    val titles = remember { listOf("Agenda","To-Do List","Maps") }
+    val subtitles = remember { listOf("","What are you going to do today ?","Where do you need to go ?") }
     val selectedDay by calendarVM.selectedDay.collectAsState()
     val taskCounts by calendarVM.taskCounts.collectAsState()
+
+    // Optimisation : Utiliser derivedStateOf pour éviter des recompositions inutiles de la TopBar lors du scroll
+    val currentTitle by remember(selectedDay) {
+        derivedStateOf {
+            if (pagerState.targetPage == 0) selectedDay.month.toString() 
+            else titles[pagerState.targetPage]
+        }
+    }
+
+    val currentSubtitle by remember(selectedDay, taskCounts) {
+        derivedStateOf {
+            if (pagerState.targetPage == 0 && taskCounts[selectedDay] != null) 
+                "${taskCounts[selectedDay]} tasks to do this month"
+            else subtitles[pagerState.targetPage]
+        }
+    }
 
     var mapRef by remember { mutableStateOf<MapView?>(null) }
     var mapLocationOverlay by remember { mutableStateOf<MyLocationNewOverlay?>(null) }
@@ -81,36 +122,17 @@ fun MainView(
         topBar = {
             TopBar(
                 scrollBehavior = scrollBehavior,
-                title = if (pagerState.targetPage == 0) selectedDay.month.toString() else title[pagerState.targetPage],
-                subtitle = if (pagerState.targetPage == 0 && taskCounts[selectedDay] != null) taskCounts[selectedDay].toString() + " tasks to do this month"  else subtitle[pagerState.targetPage],
+                title = currentTitle,
+                subtitle = currentSubtitle,
                 onStartClick = onTopBarClick,
             )},
         bottomBar = { },
         floatingActionButton = {
-           /* AnimatedVisibility(
-                visible = true,
-            ) {
-                if (pagerState.targetPage != 2) {
-                    FloatingActionButton(
-                        onClick = {},
-                        content = {
-                            Icon(Icons.Default.Add, contentDescription = "Add")
-                        }
-                    )
-                }else {
-                    LargeFloatingActionButton(
-                        onClick = {},
-                        content = {
-                            Icon(Icons.Default.MyLocation, contentDescription = "Location")
-                        }
-                    )
-                }
-            }*/
         }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()){
             HorizontalPager(
-                beyondViewportPageCount = 2,
+                beyondViewportPageCount = 0,
                 state = pagerState,
                 modifier = Modifier.padding(top = innerPadding.calculateTopPadding()),
                 userScrollEnabled = false
@@ -133,7 +155,7 @@ fun MainView(
                 onAgendaClick = {scope.launch { pagerState.animateScrollToPage(0)}},
                 onTaskListClick = {scope.launch { pagerState.animateScrollToPage(1)}},
                 onMapsClick = {scope.launch { pagerState.animateScrollToPage(2)}},
-                onAddClick = {
+                onAddNormalTask = {
                     val task = Task()
                     taskListVM.onEvent(TaskEvent.NewTask(task))
                     val newday = LocalDateTime.of(selectedDay, LocalTime.NOON)
@@ -142,6 +164,20 @@ fun MainView(
                     }
                     navController.navigate("edit-task/${task.id}")
                 },
+                onAddRecurringTask = {
+                    val newTask = Task(name = "Tâche récurrente", recurrence = RecurrenceFrequency.DAILY, expirationDate = LocalDateTime.now())
+                    taskListVM.onEvent(TaskEvent.NewTask(newTask))
+                    navController.navigate("edit-task/${newTask.id}")
+                },
+                onAddBirthday = {
+                    val task = Task(isBirthday = true)
+                    taskListVM.onEvent(TaskEvent.NewTask(task))
+                    val newday = LocalDateTime.of(selectedDay, LocalTime.NOON)
+                    if(pagerState.currentPage == 0){
+                        taskListVM.onEvent(TaskEvent.EditDate(task,newday))
+                    }
+                    navController.navigate("edit-birthday/${task.id}")
+                },
                 onZoomClick = {
                     mapLocationOverlay?.let { overlay ->
                         overlay.enableFollowLocation()
@@ -149,7 +185,6 @@ fun MainView(
                         mapRef?.let { map ->
                             val location = overlay.myLocation
                             if (location != null) {
-                                /*map.controller.animateTo(location)*/
                                 map.controller.zoomTo(18.0,500L)
                                 overlay.enableFollowLocation()
                             }
@@ -164,9 +199,49 @@ fun MainView(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun ExpressiveLoadingScreen() {
+    val infiniteTransition = rememberInfiniteTransition(label = "loading")
+    
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.4f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bgScale"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colorScheme.surface),
+        contentAlignment = Alignment.Center
+    ) {
+        // Cercle pulsant en arrière-plan pour renforcer l'aspect expressif
+        Box(
+            modifier = Modifier
+                .size(140.dp)
+                .graphicsLayer {
+                    scaleX = scale /2
+                    scaleY = scale /2
+                    alpha = 0.15f
+                }
+                .background(colorScheme.primaryContainer, CircleShape)
+        )
+        
+        // Indicateur de chargement Material 3 avec formes morphing (Expressive)
+        LoadingIndicator(
+            modifier = Modifier.size(72.dp),
+            color = colorScheme.primary
+        )
+    }
+}
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 @Preview(showBackground = true)
 fun AppScreen(initialPage : Int = 1){
@@ -175,72 +250,127 @@ fun AppScreen(initialPage : Int = 1){
     val scope = rememberCoroutineScope()
     val taskListVM : TaskListVM = hiltViewModel()
     val calendarVM : CalendarVM = hiltViewModel()
+    
+    val uiState by taskListVM.uiState.collectAsState()
 
     val drawerState = rememberWideNavigationRailState()
-
-
-
     val navController = rememberNavController()
 
     NotificationPermissionRequest()
-    AppNavigationDrawer(
-        state = drawerState,
-        selectedIndex = pagerState.currentPage,
-        onPageSelected = { index ->
-            scope.launch { pagerState.animateScrollToPage(index) }
-        }
-    ) {
-        NavHost(
-            navController = navController,
-            startDestination = "main",
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colorScheme.background),
-            enterTransition = {
-                slideInHorizontally(initialOffsetX = { it })
-            },
-            exitTransition = {
-                slideOutHorizontally(targetOffsetX = { -it / 4 })
-            },
-            popEnterTransition = {
-                slideInHorizontally(initialOffsetX = { -it / 4 }) + fadeIn()
-            },
-            popExitTransition = {
-                slideOutHorizontally(targetOffsetX = { it })
-            },
 
-            ) {
-            composable("main") {
-                MainView(
-                    scrollBehavior,
-                    pagerState,
-                    scope,
-                    navController,
-                    taskListVM,
-                    calendarVM,
-                    ({ scope.launch { drawerState.toggle() } })
-                )
-            }
-            dialog(
-                route = "edit-task/{taskId}",
-                arguments = listOf(navArgument("taskId") { type = NavType.IntType }),
+    var isContentVisible by remember { mutableStateOf(false) }
 
-                dialogProperties = DialogProperties(
-                    usePlatformDefaultWidth = false
-                )
-            ) { backStackEntry ->
-                val taskId = backStackEntry.arguments?.getInt("taskId")
-                EditView(
-                    popBack = { navController.popBackStack() },
-                    viewModel = taskListVM,
-                    taskId = taskId
-                )
-            }
-
-
+    LaunchedEffect(uiState.isLoading) {
+        if (!uiState.isLoading) {
+            delay(100) 
+            isContentVisible = true
         }
     }
 
+    AnimatedContent(
+        targetState = uiState.isLoading,
+        transitionSpec = {
+            (fadeIn(animationSpec = tween(800)) + scaleIn(initialScale = 0.9f))
+                .togetherWith(fadeOut(animationSpec = tween(800)) + scaleOut(targetScale = 1.1f))
+        },
+        label = "LoadingTransition"
+    ) { isLoading ->
+        if (isLoading) {
+            ExpressiveLoadingScreen()
+        } else {
+            if (isContentVisible) {
+                AppNavigationDrawer(
+                    state = drawerState,
+                    selectedIndex = pagerState.currentPage,
+                    onPageSelected = { index ->
+                        scope.launch { pagerState.animateScrollToPage(index) }
+                    },
+                    onAboutClick = {
+                        navController.navigate("about")
+                    },
+                    onSettingsClick = {
+                        navController.navigate("settings")
+                    }
+                ) {
+                    NavHost(
+                        navController = navController,
+                        startDestination = "main",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(colorScheme.background),
+                        enterTransition = {
+                            slideInHorizontally(initialOffsetX = { it })
+                        },
+                        exitTransition = { slideOutHorizontally(targetOffsetX = { -it / 4 }) },
+                        popEnterTransition = {
+                            slideInHorizontally(initialOffsetX = { -it / 4 }) + fadeIn()
+                        },
+                        popExitTransition = {
+                            slideOutHorizontally(targetOffsetX = { it })
+                        },
 
-
+                        ) {
+                        composable("main") {
+                            MainView(
+                                scrollBehavior,
+                                pagerState,
+                                scope,
+                                navController,
+                                taskListVM,
+                                calendarVM,
+                                ({ scope.launch { drawerState.toggle() } })
+                            )
+                        }
+                        composable("settings") {
+                            SettingsView(navController = navController)
+                        }
+                        composable("settings/permissions") {
+                            PermissionsView(navController = navController)
+                        }
+                        composable("about") {
+                            AboutView(onBack = { navController.popBackStack() }, navController)
+                        }
+                        composable("about/secret"){
+                            CalcView()
+                        }
+                        dialog(
+                            route = "edit-task/{taskId}",
+                            arguments = listOf(navArgument("taskId") { type = NavType.IntType }),
+                            dialogProperties = DialogProperties(usePlatformDefaultWidth = false)
+                        ) { backStackEntry ->
+                            val taskId = backStackEntry.arguments?.getInt("taskId")
+                            EditView(
+                                popBack = { navController.popBackStack() },
+                                viewModel = taskListVM,
+                                taskId = taskId
+                            )
+                        }
+                        dialog(
+                            route = "edit-birthday",
+                            dialogProperties = DialogProperties(usePlatformDefaultWidth = false)
+                        ) {
+                            EditBirthdayView(
+                                popBack = { navController.popBackStack() },
+                                viewModel = taskListVM
+                            )
+                        }
+                        dialog(
+                            route = "edit-birthday/{taskId}",
+                            arguments = listOf(navArgument("taskId") { type = NavType.IntType }),
+                            dialogProperties = DialogProperties(usePlatformDefaultWidth = false)
+                        ) { backStackEntry ->
+                            val taskId = backStackEntry.arguments?.getInt("taskId")
+                            EditBirthdayView(
+                                popBack = { navController.popBackStack() },
+                                viewModel = taskListVM,
+                                taskId = taskId
+                            )
+                        }
+                    }
+                }
+            } else {
+                Box(modifier = Modifier.fillMaxSize().background(colorScheme.surface))
+            }
+        }
+    }
 }
