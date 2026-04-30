@@ -97,14 +97,14 @@ fun MainView(
     // Optimisation : Utiliser derivedStateOf pour éviter des recompositions inutiles de la TopBar lors du scroll
     val currentTitle by remember(selectedDay) {
         derivedStateOf {
-            if (pagerState.targetPage == 0) selectedDay.month.toString() 
+            if (pagerState.targetPage == 0) selectedDay.month.toString()
             else titles[pagerState.targetPage]
         }
     }
 
     val currentSubtitle by remember(selectedDay, taskCounts) {
         derivedStateOf {
-            if (pagerState.targetPage == 0 && taskCounts[selectedDay] != null) 
+            if (pagerState.targetPage == 0 && taskCounts[selectedDay] != null)
                 "${taskCounts[selectedDay]} tasks to do this month"
             else subtitles[pagerState.targetPage]
         }
@@ -140,7 +140,9 @@ fun MainView(
                 when (pageIndex){
                     0-> CalendarView(navController, calendarVM)
                     1-> TaskListView(navController,taskListVM)
-                    2-> MapsView(
+                    2-> MapsView(   //ajout du navcontroller et de la liste de tache a La map.
+                        navController = navController,
+                        taskListVM = taskListVM,
                         onMapReady = { map, overlay ->
                             mapRef = map
                             mapLocationOverlay = overlay
@@ -203,7 +205,7 @@ fun MainView(
 @Composable
 fun ExpressiveLoadingScreen() {
     val infiniteTransition = rememberInfiniteTransition(label = "loading")
-    
+
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f,
         targetValue = 1.4f,
@@ -231,7 +233,7 @@ fun ExpressiveLoadingScreen() {
                 }
                 .background(colorScheme.primaryContainer, CircleShape)
         )
-        
+
         // Indicateur de chargement Material 3 avec formes morphing (Expressive)
         LoadingIndicator(
             modifier = Modifier.size(72.dp),
@@ -250,7 +252,7 @@ fun AppScreen(initialPage : Int = 1){
     val scope = rememberCoroutineScope()
     val taskListVM : TaskListVM = hiltViewModel()
     val calendarVM : CalendarVM = hiltViewModel()
-    
+
     val uiState by taskListVM.uiState.collectAsState()
 
     val drawerState = rememberWideNavigationRailState()
@@ -262,7 +264,7 @@ fun AppScreen(initialPage : Int = 1){
 
     LaunchedEffect(uiState.isLoading) {
         if (!uiState.isLoading) {
-            delay(100) 
+            delay(100)
             isContentVisible = true
         }
     }
