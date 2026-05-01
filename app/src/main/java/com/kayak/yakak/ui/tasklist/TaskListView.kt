@@ -35,6 +35,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -73,15 +74,18 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.kayak.yakak.data.RecurrenceFrequency
 import com.kayak.yakak.data.Task
 import com.kayak.yakak.ui.theme.YKShapeDefaults.bottomListItemShape
@@ -122,11 +126,20 @@ fun BirthdayItem(task: Task, onClick: () -> Unit = {}) {
     ) {
         Row(modifier = Modifier.padding(20.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Box(modifier = Modifier.size(64.dp).clip(MaterialTheme.shapes.large).background(colorScheme.surface)) {
-                Icon(Icons.Default.Cake, contentDescription = null, modifier = Modifier.align(Alignment.Center).size(36.dp), tint = colorScheme.primary)
+                if (!task.profileImageUri.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = task.profileImageUri,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(Icons.Default.Cake, contentDescription = null, modifier = Modifier.align(Alignment.Center).size(36.dp), tint = colorScheme.primary)
+                }
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = "Anniversaire de ${task.name}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
-                Text(text = "C'est sa journée spéciale ! 🎂✨", style = MaterialTheme.typography.bodyLarge)
+                Text(text = "C'est sa journée spéciale ! \uD83C\uDF82✨", style = MaterialTheme.typography.bodyLarge)
             }
             Icon(Icons.Outlined.Celebration, contentDescription = null, modifier = Modifier.size(40.dp))
         }
@@ -239,7 +252,11 @@ fun TaskItem(
 }
 
 @Composable
-fun TaskListView(navController: NavController, tasks: TaskListVM = viewModel()) {
+fun TaskListView(
+    navController: NavController,
+    tasks: TaskListVM = viewModel(),
+    onAddClick: () -> Unit = {}
+) {
     val state by tasks.uiState.collectAsState()
     val birthdays = state.birthdaysToday
     val mixOfDay = state.mixOfTheDay
@@ -289,13 +306,60 @@ fun TaskListView(navController: NavController, tasks: TaskListVM = viewModel()) 
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
+            if (birthdays.isEmpty() && mixOfDay.isEmpty() && upcoming.isEmpty()) {
+                item {
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = !showHiddenItem,
+                        enter = androidx.compose.animation.fadeIn(),
+                        exit = androidx.compose.animation.fadeOut()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillParentMaxSize()
+                                .padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "☕",
+                                style = MaterialTheme.typography.displayLarge,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+                            Text(
+                                text = "Rien à faire pour le moment !",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = "Profitez de votre temps libre ou créez une nouvelle tâche pour rester organisé.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(top = 8.dp, bottom = 32.dp)
+                            )
+                            androidx.compose.material3.Button(
+                                onClick = onAddClick,
+                                shape = MaterialTheme.shapes.extraLarge,
+                                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Créer ma première tâche", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+
             if (birthdays.isNotEmpty()) {
                 item { Text("Anniversaires", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
-                items(birthdays.size, key = { index -> "bday_${birthdays[index].id}" }) { index ->
+                itemsIndexed(birthdays, key = { _, task -> "bday_${task.id}" }) { index, task ->
                     BirthdayItem(
-                        task = birthdays[index],
-                        onClick = { navController.navigate("edit-birthday/${birthdays[index].id}") }
-                    ) }
+                        task = task,
+                        onClick = { navController.navigate("edit-birthday/${task.id}") }
+                    )
+                }
                 item { Spacer(Modifier.height(16.dp)) }
             }
 

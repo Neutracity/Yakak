@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kayak.yakak.ui.TopBar
@@ -88,7 +89,7 @@ fun EditView(
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         dragHandle = { BottomSheetDefaults.DragHandle() },
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize().testTag("EDITSHEET")
     ) {
         if (pickerContext == PickerContext.EXPIRATION_DATE || pickerContext == PickerContext.REMINDER_DATE) {
             DatePickerModal(
@@ -287,11 +288,12 @@ fun EditView(
                     onClick = {
                         if (nameText.isNotBlank()) {
                             viewModel.onEvent(TaskEvent.EditTask(task.copy(name = nameText, description = descriptionText)))
+                            popBack()
                         }
-                        popBack()
                     },
                     modifier = Modifier.align(Alignment.BottomEnd),
-                    containerColor = MaterialTheme.colorScheme.primary,
+                    containerColor = if (nameText.isNotBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = if (nameText.isNotBlank()) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
                     icon = { Icon(Icons.Outlined.Check, contentDescription = null) },
                     text = { Text("Enregistrer", fontWeight = FontWeight.Bold) }
                 )

@@ -114,32 +114,17 @@ fun EditBirthdayView(
     var profileImageUri by remember(initialTask?.id) { mutableStateOf(initialTask?.profileImageUri) }
     var pickerContext by remember { mutableStateOf(PickerContext.NONE) }
 
-    val contactPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickContact(),
-        onResult = { uri ->
-            uri?.let { contactUri ->
-                val cursor = context.contentResolver.query(contactUri, null, null, null, null)
-                cursor?.use {
-                    if (it.moveToFirst()) {
-                        val nameIndex = it.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)
-                        if (nameIndex != -1) nameText = it.getString(nameIndex)
-
-                        val idIndex = it.getColumnIndex(ContactsContract.Contacts._ID)
-                        if (idIndex != -1) {
-                            val contactId = it.getLong(idIndex)
-                            val photoUri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, contactId)
-                            profileImageUri = photoUri.toString()
-                        }
-                    }
-                }
-            }
-        }
-    )
-
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
-            uri?.let { profileImageUri = it.toString() }
+            uri?.let { 
+                try {
+                    context.contentResolver.takePersistableUriPermission(it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+                profileImageUri = it.toString() 
+            }
         }
     )
 
@@ -221,7 +206,7 @@ fun EditBirthdayView(
                 item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Photo Picker
@@ -252,24 +237,6 @@ fun EditBirthdayView(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(Icons.Outlined.AddAPhoto, contentDescription = null, modifier = Modifier.size(18.dp))
-                            }
-                        }
-                        
-                        // Contact Picker
-                        Card(
-                            onClick = { contactPickerLauncher.launch(null) },
-                            modifier = Modifier.weight(1f).height(140.dp),
-                            shape = MaterialTheme.shapes.extraLarge,
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxSize().padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Icon(Icons.Default.Face, contentDescription = null, modifier = Modifier.size(32.dp))
-                                Spacer(Modifier.height(8.dp))
-                                Text("Choisir un\nContact", textAlign = androidx.compose.ui.text.style.TextAlign.Center, style = MaterialTheme.typography.labelLarge)
                             }
                         }
                     }
@@ -380,14 +347,12 @@ fun EditBirthdayView(
                             } else {
                                 viewModel.onEvent(TaskEvent.EditTask(taskToSave))
                             }
+                            popBack()
                         }
-                        if(nameText.isEmpty()){
-                            initialTask?.let{ viewModel.onEvent(TaskEvent.Delete(initialTask))}
-                        }
-                        popBack()
                     },
                     modifier = Modifier.align(Alignment.BottomEnd),
-                    containerColor = MaterialTheme.colorScheme.primary,
+                    containerColor = if (nameText.isNotBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = if (nameText.isNotBlank()) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
                     icon = { Icon(Icons.Outlined.Celebration, contentDescription = null) },
                     text = { Text("C'est la fête !", fontWeight = FontWeight.Bold) }
                 )

@@ -5,7 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.kayak.yakak.data.Location
 import com.kayak.yakak.data.RecurrenceFrequency
 import com.kayak.yakak.data.Task
-import com.kayak.yakak.data.TaskRepository
+import com.kayak.yakak.domain.usecase.AddTaskUseCase
+import com.kayak.yakak.domain.usecase.DeleteTaskUseCase
+import com.kayak.yakak.domain.usecase.GetTasksUseCase
+import com.kayak.yakak.domain.usecase.UpdateTaskUseCase
 import com.kayak.yakak.utils.ReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -40,7 +43,10 @@ data class TaskListUiState(
 
 @HiltViewModel
 class TaskListVM @Inject constructor(
-    private val taskRepository: TaskRepository,
+    private val getTasksUseCase: GetTasksUseCase,
+    private val addTaskUseCase: AddTaskUseCase,
+    private val updateTaskUseCase: UpdateTaskUseCase,
+    private val deleteTaskUseCase: DeleteTaskUseCase,
     private val reminderScheduler: ReminderScheduler
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(TaskListUiState())
@@ -49,7 +55,7 @@ class TaskListVM @Inject constructor(
     init {
         viewModelScope.launch {
             delay(1200)
-            taskRepository.tasks.collect { allTasks ->
+            getTasksUseCase().collect { allTasks ->
                 val now = LocalDate.now()
                 val birthdaysToday = allTasks.filter { 
                     it.isBirthday && it.expirationDate.toLocalDate().isEqual(now) 
@@ -107,7 +113,7 @@ class TaskListVM @Inject constructor(
                     event.task.reminderList.forEach { time ->
                         reminderScheduler.cancel(event.task, time)
                     }
-                    taskRepository.deleteTask(event.task)
+                    deleteTaskUseCase(event.task)
                 }
                 is TaskEvent.EditState -> {
                     if (event.newState) {
@@ -128,13 +134,13 @@ class TaskListVM @Inject constructor(
                         event.task.reminderList.forEach { time ->
                             reminderScheduler.cancel(event.task, time)
                         }
-                        taskRepository.updateTask(updatedTask)
+                        updateTaskUseCase(updatedTask)
                     } else {
-                        taskRepository.updateTask(event.task.copy(isCompleted = false, finishedDate = null))
+                        updateTaskUseCase(event.task.copy(isCompleted = false, finishedDate = null))
                     }
                 }
-                is TaskEvent.EditTitle -> taskRepository.updateTask(event.task.copy(name = event.newTitle))
-                is TaskEvent.EditDescription -> taskRepository.updateTask(event.task.copy(description = event.newDescription))
+                is TaskEvent.EditTitle -> updateTaskUseCase(event.task.copy(name = event.newTitle))
+                is TaskEvent.EditDescription -> updateTaskUseCase(event.task.copy(description = event.newDescription))
                 is TaskEvent.NewTask -> {
                     var taskToSave = event.task
                     if (event.task.isBirthday) {
@@ -151,17 +157,17 @@ class TaskListVM @Inject constructor(
                             reminderScheduler.schedule(taskToSave, time)
                         }
                     }
-                    taskRepository.addTask(taskToSave)
+                    addTaskUseCase(taskToSave)
                 }
-                is TaskEvent.EditDate -> taskRepository.updateTask(event.task.copy(expirationDate = event.newDate))
-                is TaskEvent.EditLocation -> taskRepository.updateTask(event.task.copy(location = event.newLocation))
+                is TaskEvent.EditDate -> updateTaskUseCase(event.task.copy(expirationDate = event.newDate))
+                is TaskEvent.EditLocation -> updateTaskUseCase(event.task.copy(location = event.newLocation))
                 is TaskEvent.EditTask -> {
                     event.task.reminderList.forEach { time ->
                         if (time.isAfter(LocalDateTime.now())) {
                             reminderScheduler.schedule(event.task, time)
                         }
                     }
-                    taskRepository.updateTask(event.task)
+                    updateTaskUseCase(event.task)
                 }
             }
         }

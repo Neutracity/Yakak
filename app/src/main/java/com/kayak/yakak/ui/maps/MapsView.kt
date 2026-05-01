@@ -4,10 +4,17 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -16,8 +23,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -51,6 +60,7 @@ fun MapsView(
 ) {
     val context = LocalContext.current
     val uiState by taskListVM.uiState.collectAsState()
+    var isMapLoading by remember { mutableStateOf(true) }
 
     var hasLocationPermission by remember {
         mutableStateOf(
@@ -69,8 +79,15 @@ fun MapsView(
         }
     )
 
+    val primaryColor = MaterialTheme.colorScheme.primary.toArgb()
+    val secondaryColor = MaterialTheme.colorScheme.secondary.toArgb()
+    
+    val mapPrefs = remember { context.getSharedPreferences("osm_pref", 0) }
+    val lastLat = remember { mapPrefs.getFloat("last_lat", 48.8583f).toDouble() }
+    val lastLon = remember { mapPrefs.getFloat("last_lon", 2.2945f).toDouble() }
+
     LaunchedEffect(Unit) {
-        Configuration.getInstance().load(context, context.getSharedPreferences("osm_pref", 0))
+        Configuration.getInstance().load(context, mapPrefs)
         Configuration.getInstance().userAgentValue = context.packageName
 
         if (!hasLocationPermission) {
@@ -87,28 +104,64 @@ fun MapsView(
         MapView(context).apply {
             setTileSource(TileSourceFactory.MAPNIK)
             setMultiTouchControls(true)
+            setBuiltInZoomControls(false)
             controller.setZoom(15.0)
-            controller.setCenter(GeoPoint(48.8583, 2.2945))
-            setOnTouchListener { v, event ->
-                if (this.overlays.filterIsInstance<MyLocationNewOverlay>().firstOrNull()?.isFollowLocationEnabled == true) {
-                    this.overlays.filterIsInstance<MyLocationNewOverlay>().firstOrNull()?.disableFollowLocation()
-                }
+            controller.setCenter(GeoPoint(lastLat, lastLon))
+            setOnTouchListener { _, _ ->
+                this.overlays.filterIsInstance<MyLocationNewOverlay>().firstOrNull()?.disableFollowLocation()
                 false
+            }
+            addOnFirstLayoutListener { _, _, _, _, _ ->
+                isMapLoading = false
             }
         }
     }
 
-    // fonction de clic long pour ajouter le repere.
+    // Helper functions for markers
+    fun createDotIcon(color: Int, sizeDp: Int = 16): GradientDrawable {
+        val sizePx = (sizeDp * context.resources.displayMetrics.density).toInt()
+        return GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(color)
+            setSize(sizePx, sizePx)
+            setStroke(2, android.graphics.Color.WHITE)
+        }
+    }
+
+    fun createPinIcon(primaryColor: Int, secondaryColor: Int): android.graphics.drawable.Drawable {
+        val density = context.resources.displayMetrics.density
+        val sizePx = (40 * density).toInt()
+        val innerCircleSize = (14 * density).toInt()
+        
+        val base = ContextCompat.getDrawable(context, org.osmdroid.library.R.drawable.marker_default)?.mutate()
+        base?.setTint(primaryColor)
+        
+        val whiteCircle = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(android.graphics.Color.WHITE)
+            setSize(innerCircleSize + 4, innerCircleSize + 4)
+        }
+        
+        val innerCircle = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(secondaryColor)
+            setSize(innerCircleSize, innerCircleSize)
+        }
+        
+        val layers = arrayOf(base, whiteCircle, innerCircle)
+        return LayerDrawable(layers).apply {
+            // Adjust insets to center circles in the marker head
+            setLayerInset(1, (11 * density).toInt(), (6 * density).toInt(), (11 * density).toInt(), (20 * density).toInt())
+            setLayerInset(2, (13 * density).toInt(), (8 * density).toInt(), (13 * density).toInt(), (22 * density).toInt())
+        }
+    }
+
     LaunchedEffect(mapView) {
         val eventsReceiver = object : MapEventsReceiver {
             override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean = false
-
             override fun longPressHelper(p: GeoPoint?): Boolean {
                 p?.let {
-                    val newTask = Task(
-                        name = "Nouveau repère",
-                        location = Location(it.latitude, it.longitude)
-                    )
+                    val newTask = Task(name = "Nouveau repère", location = Location(it.latitude, it.longitude))
                     taskListVM.onEvent(TaskEvent.NewTask(newTask))
                     navController.navigate("edit-task/${newTask.id}")
                 }
@@ -118,11 +171,8 @@ fun MapsView(
         mapView.overlays.add(0, MapEventsOverlay(eventsReceiver))
     }
 
-    //Mise à jour des marqueurs quand les task sont finies ou modifiées
     LaunchedEffect(uiState.pendingTasks, uiState.finishedTasks) {
-        // Nettoyer les anciens marqueurs
-        val overlaysToRemove = mapView.overlays.filterIsInstance<Marker>()
-        mapView.overlays.removeAll(overlaysToRemove)
+        mapView.overlays.removeAll(mapView.overlays.filterIsInstance<Marker>())
 
         val allTasks = uiState.pendingTasks + uiState.finishedTasks
         allTasks.filter { it.location.latitude != 0.0 || it.location.longitude != 0.0 }.forEach { task ->
@@ -130,78 +180,70 @@ fun MapsView(
             marker.position = GeoPoint(task.location.latitude, task.location.longitude)
             marker.title = task.name
             marker.snippet = if (task.isCompleted) "Terminée" else task.description
-            marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-
-            //Si la tâche est terminée, on grise le marqueur
+            
             if (task.isCompleted) {
-                val icon = ContextCompat.getDrawable(context, org.osmdroid.library.R.drawable.marker_default)?.mutate()
-                icon?.setTint(android.graphics.Color.GRAY)
-                marker.icon = icon
-                marker.alpha = 0.5f //Transparence pour les tâches finies
+                marker.icon = createDotIcon(android.graphics.Color.GRAY, 12)
+                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                marker.alpha = 0.6f
+            } else {
+                marker.icon = createPinIcon(primaryColor, secondaryColor)
+                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
             }
 
-            marker.setOnMarkerClickListener { m, _ ->
+            marker.setOnMarkerClickListener { _, _ ->
                 navController.navigate("edit-task/${task.id}")
                 true
             }
             mapView.overlays.add(marker)
         }
-        mapView.invalidate() // Rafraîchir la carte
+        mapView.invalidate()
     }
 
     val locationOverlay = remember(mapView) {
         MyLocationNewOverlay(GpsMyLocationProvider(context), mapView).apply {
-            if (hasLocationPermission) {
-                enableMyLocation()
-            }
+            if (hasLocationPermission) enableMyLocation()
         }
     }
 
-    //Logique de proximité (Notification 300m)
-    val notifiedTasks = remember { mutableSetOf<Int>() }
+    LaunchedEffect(locationOverlay.myLocation) {
+        locationOverlay.myLocation?.let { loc ->
+            mapPrefs.edit()
+                .putFloat("last_lat", loc.latitude.toFloat())
+                .putFloat("last_lon", loc.longitude.toFloat())
+                .apply()
+        }
+    }
 
+    val notifiedTasks = remember { mutableSetOf<Int>() }
     LaunchedEffect(locationOverlay, uiState.pendingTasks) {
         while (true) {
-            val myLocation = locationOverlay.myLocation
-            if (myLocation != null) {
+            locationOverlay.myLocation?.let { myLocation ->
                 uiState.pendingTasks.forEach { task ->
                     if (task.location.latitude != 0.0 && task.location.longitude != 0.0) {
-                        val taskPos = GeoPoint(task.location.latitude, task.location.longitude)
-                        val distance = myLocation.distanceToAsDouble(taskPos)
-
-                        if (distance < 300.0) {
-                            if (!notifiedTasks.contains(task.id)) {
-                                // On déclenche la notification via le Receiver existant
-                                val intent = Intent(context, ReminderReceiver::class.java).apply {
-                                    putExtra("TASK_NAME", "À proximité : ${task.name}")
-                                    putExtra("TASK_ID", task.id)
-                                    putExtra("TASK_DESC", "Vous êtes à moins de 300m de cet objectif.")
-                                }
-                                context.sendBroadcast(intent)
-                                notifiedTasks.add(task.id)
+                        val distance = myLocation.distanceToAsDouble(GeoPoint(task.location.latitude, task.location.longitude))
+                        if (distance < 300.0 && !notifiedTasks.contains(task.id)) {
+                            val intent = Intent(context, ReminderReceiver::class.java).apply {
+                                putExtra("TASK_NAME", "À proximité : ${task.name}")
+                                putExtra("TASK_ID", task.id)
+                                putExtra("TASK_DESC", "Vous êtes à moins de 300m de cet objectif.")
                             }
-                        } else if (distance > 500.0) {
-                            // On autorise à nouveau la notification si on s'éloigne (hystérésis)
-                            notifiedTasks.remove(task.id)
-                        }
+                            context.sendBroadcast(intent)
+                            notifiedTasks.add(task.id)
+                        } else if (distance > 500.0) notifiedTasks.remove(task.id)
                     }
                 }
             }
-            delay(5000) // Vérification toutes les 5 secondes pour économiser la batterie
+            delay(5000)
         }
     }
 
-    LaunchedEffect(locationOverlay, mapView) {
-        onMapReady(mapView, locationOverlay)
-    }
+    LaunchedEffect(locationOverlay, mapView) { onMapReady(mapView, locationOverlay) }
 
     LaunchedEffect(hasLocationPermission) {
         if (hasLocationPermission) {
             locationOverlay.enableMyLocation()
             locationOverlay.enableFollowLocation()
-            if (!mapView.overlays.contains(locationOverlay)) {
-                mapView.overlays.add(locationOverlay)
-            }
+            if (!mapView.overlays.contains(locationOverlay)) mapView.overlays.add(locationOverlay)
         }
     }
 
@@ -211,9 +253,7 @@ fun MapsView(
             when (event) {
                 Lifecycle.Event.ON_RESUME -> {
                     mapView.onResume()
-                    if (hasLocationPermission) {
-                        locationOverlay.enableMyLocation()
-                    }
+                    if (hasLocationPermission) locationOverlay.enableMyLocation()
                 }
                 Lifecycle.Event.ON_PAUSE -> {
                     mapView.onPause()
@@ -223,15 +263,13 @@ fun MapsView(
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    Box(modifier = modifier.fillMaxSize().clipToBounds()) {
-        AndroidView(
-            factory = { mapView },
-            modifier = Modifier.fillMaxSize()
-        )
+    Box(modifier = modifier.fillMaxSize().clipToBounds(), contentAlignment = Alignment.Center) {
+        AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
+        AnimatedVisibility(visible = isMapLoading, enter = fadeIn(), exit = fadeOut()) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+        }
     }
 }

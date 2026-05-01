@@ -3,7 +3,6 @@ package com.kayak.yakak.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -13,13 +12,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -27,6 +24,7 @@ import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Checklist
@@ -44,11 +42,7 @@ import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.ToggleFloatingActionButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -57,6 +51,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.style.TextOverflow
@@ -70,6 +65,8 @@ fun BottomBar(
     modifier: Modifier = Modifier,
     selectedIndex: Int = 1,
     expanded: Boolean = true,
+    fabMenuExpanded: Boolean = false,
+    onFabMenuToggle: (Boolean) -> Unit = {},
     onAgendaClick: () -> Unit = {},
     onTaskListClick: () -> Unit = {},
     onMapsClick: () -> Unit = {},
@@ -79,31 +76,31 @@ fun BottomBar(
     onZoomClick: () -> Unit = {},
 ) {
     val haptic = LocalHapticFeedback.current
-    var fabMenuExpanded by remember { mutableStateOf(false) }
+    val isMapPage = selectedIndex == 2
 
-    BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
+    BackHandler(fabMenuExpanded) { onFabMenuToggle(false) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Scrim
-        AnimatedVisibility(
-            visible = fabMenuExpanded,
-            enter = fadeIn(tween(400)),
-            exit = fadeOut(tween(400))
-        ) {
+    Box(
+        modifier = if (fabMenuExpanded) Modifier.fillMaxSize() else modifier,
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        // Full screen scrim when expanded
+        if (fabMenuExpanded) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.32f))
+                    .background(Color.Black.copy(alpha = 0.5f))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
-                    ) { fabMenuExpanded = false }
+                    ) { onFabMenuToggle(false) }
+                    .zIndex(10f)
             )
         }
 
+        // Navigation Bar Container
         Box(
-            modifier = modifier
-                .align(Alignment.BottomCenter)
+            modifier = Modifier
                 .fillMaxWidth()
                 .background(
                     Brush.verticalGradient(
@@ -111,16 +108,14 @@ fun BottomBar(
                         1.0f to colorScheme.surfaceContainer
                     )
                 )
-                .padding(bottom = 30.dp),
+                .padding(bottom = 30.dp)
+                .zIndex(if (fabMenuExpanded) 5f else 1f),
             contentAlignment = Alignment.Center
         ) {
             Box(
-                //verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 contentAlignment = Alignment.Center
-                //horizontalArrangement = Arrangement.Center
             ) {
-                // Navigation Bar
                 HorizontalFloatingToolbar(
                     expanded = expanded && !fabMenuExpanded,
                     colors = FloatingToolbarDefaults.standardFloatingToolbarColors(),
@@ -170,53 +165,67 @@ fun BottomBar(
                         }
                     }
                 }
+            }
+        }
 
-                Spacer(Modifier.width(8.dp))
-
-                // Official FloatingActionButtonMenu
-                FloatingActionButtonMenu(
-                    modifier = Modifier.zIndex(2f).align(Alignment.BottomEnd).offset(y = 5.dp),
-                    expanded = fabMenuExpanded,
-                    button = {
-                        ToggleFloatingActionButton(
-                            modifier = Modifier.semantics { traversalIndex = -1f },
-                            checked = fabMenuExpanded,
-                            onCheckedChange = { 
-                                fabMenuExpanded = it 
+        // FAB Menu - Higher zIndex than Scrim
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = 16.dp, end = 16.dp, bottom = 30.dp,
+                )
+                .zIndex(20f),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+            FloatingActionButtonMenu(
+                modifier = Modifier.offset(y = 5.dp).testTag("FABMENU"),
+                expanded = fabMenuExpanded && !isMapPage,
+                button = {
+                    ToggleFloatingActionButton(
+                        modifier = Modifier.semantics { traversalIndex = -1f }.zIndex(21f).testTag("FAB"),
+                        checked = fabMenuExpanded && !isMapPage,
+                        onCheckedChange = { 
+                            if (isMapPage) {
+                                onZoomClick()
                                 haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                            },
-                        ) {
-                            val imageVector by remember {
-                                derivedStateOf {
-                                    if (checkedProgress > 0.5f) Icons.Filled.Add else Icons.Filled.Add
-                                }
+                            } else {
+                                onFabMenuToggle(it) 
+                                haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                             }
+                        },
+                    ) {
+                        Crossfade(targetState = isMapPage, label = "fab_icon") { targetIsMap ->
+                            val imageVector = if (targetIsMap) Icons.Filled.MyLocation else Icons.Filled.Add
                             Icon(
                                 painter = rememberVectorPainter(imageVector),
                                 contentDescription = null,
                                 modifier = Modifier.graphicsLayer {
-                                    rotationZ = checkedProgress * 45f
+                                    rotationZ = if (!targetIsMap) checkedProgress * 45f else 0f
                                 },
                             )
                         }
                     }
-                ) {
-                    FloatingActionButtonMenuItem(
-                        onClick = { onAddBirthday(); fabMenuExpanded = false },
-                        icon = { Icon(Icons.Default.Cake, contentDescription = null) },
-                        text = { Text(text = "Anniversaire") },
-                    )
-                    FloatingActionButtonMenuItem(
-                        onClick = { onAddNormalTask(); fabMenuExpanded = false },
-                        icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                        text = { Text(text = "Tâche") },
-                    )
-                    FloatingActionButtonMenuItem(
-                        onClick = { onAddRecurringTask(); fabMenuExpanded = false },
-                        icon = { Icon(Icons.Default.Repeat, contentDescription = null) },
-                        text = { Text(text = "Récurrente") },
-                    )
                 }
+            ) {
+                FloatingActionButtonMenuItem(
+                    onClick = { onAddBirthday(); onFabMenuToggle(false) },
+                    icon = { Icon(Icons.Default.Cake, contentDescription = null) },
+                    text = { Text(text = "Anniversaire") },
+                    modifier = Modifier.zIndex(22f)
+                )
+                FloatingActionButtonMenuItem(
+                    onClick = { onAddNormalTask(); onFabMenuToggle(false) },
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                    text = { Text(text = "Tâche") },
+                    modifier = Modifier.zIndex(22f).testTag("ADDTASK")
+                )
+                FloatingActionButtonMenuItem(
+                    onClick = { onAddRecurringTask(); onFabMenuToggle(false) },
+                    icon = { Icon(Icons.Default.Repeat, contentDescription = null) },
+                    text = { Text(text = "Récurrente") },
+                    modifier = Modifier.zIndex(22f)
+                )
             }
         }
     }

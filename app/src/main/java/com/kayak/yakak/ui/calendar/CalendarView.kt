@@ -104,47 +104,111 @@ fun CalendarView(navController: NavController, calendarVM: CalendarVM = viewMode
     val coroutineScope = rememberCoroutineScope()
     val state = rememberCalendarState(startMonth, endMonth, currentMonth, firstDayOfWeek)
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
-            item {
-                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { coroutineScope.launch { state.animateScrollToMonth(state.firstVisibleMonth.yearMonth.minusMonths(1)) } }, colors = IconButtonDefaults.filledTonalIconButtonColors()) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, null) }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        AnimatedVisibility(visible = selectedDay != LocalDate.now()) {
-                            Button(onClick = { coroutineScope.launch { val today = LocalDate.now(); calendarVM.onEvent(CalendarEvent.SelectDay(today)); state.animateScrollToMonth(today.yearMonth) } }, colors = ButtonDefaults.filledTonalButtonColors(), modifier = Modifier.height(40.dp)) { Icon(Icons.Default.Today, null, Modifier.size(18.dp)) }
-                        }
-                        IconButton(onClick = { calendarVM.onEvent(CalendarEvent.ToggleShowLowFrequency(!showLowFreq)) }, colors = if (showLowFreq) IconButtonDefaults.filledIconButtonColors() else IconButtonDefaults.filledTonalIconButtonColors()) { Icon(Icons.Default.FilterList, null) }
+    Column(modifier = Modifier.fillMaxSize()) {
+        // FIXED HEADER SECTION
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = {
+                    coroutineScope.launch {
+                        state.animateScrollToMonth(state.firstVisibleMonth.yearMonth.minusMonths(1))
                     }
-                    IconButton(onClick = { coroutineScope.launch { state.animateScrollToMonth(state.firstVisibleMonth.yearMonth.plusMonths(1)) } }, colors = IconButtonDefaults.filledTonalIconButtonColors()) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
-                }
-            }
+                },
+                colors = IconButtonDefaults.filledTonalIconButtonColors()
+            ) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, null) }
 
-            item {
-                Surface(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(), shape = RoundedCornerShape(28.dp), color = colorScheme.surfaceContainerLow) {
-                    HorizontalCalendar(state = state, dayContent = { day ->
-                        Day(
-                            day = day,
-                            isSelected = day.date == selectedDay,
-                            isToday = day.date == LocalDate.now(),
-                            taskCount = taskCounts[day.date] ?: 0,
-                            hasBirthday = birthdays.any { it.dayOfMonth == day.date.dayOfMonth && it.month == day.date.month },
-                            selectedDayBirthdays = selectedDayBirthdays,
-                            onBirthdayHold = { calendarVM.onEvent(CalendarEvent.SelectDay(day.date)) },
-                            onClick = {
-                                calendarVM.onEvent(CalendarEvent.SelectDay(day.date))
-                                if (day.position != DayPosition.MonthDate) coroutineScope.launch { state.animateScrollToMonth(day.date.yearMonth) }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                AnimatedVisibility(visible = selectedDay != LocalDate.now()) {
+                    Button(
+                        onClick = {
+                            coroutineScope.launch {
+                                val today = LocalDate.now()
+                                calendarVM.onEvent(CalendarEvent.SelectDay(today))
+                                state.animateScrollToMonth(today.yearMonth)
                             }
-                        )
-                    }, monthHeader = { DaysOfWeek() }, modifier = Modifier.padding(12.dp))
+                        },
+                        colors = ButtonDefaults.filledTonalButtonColors(),
+                        modifier = Modifier.height(40.dp)
+                    ) { Icon(Icons.Default.Today, null, Modifier.size(18.dp)) }
                 }
+                IconButton(
+                    onClick = { calendarVM.onEvent(CalendarEvent.ToggleShowLowFrequency(!showLowFreq)) },
+                    colors = if (showLowFreq) IconButtonDefaults.filledIconButtonColors() else IconButtonDefaults.filledTonalIconButtonColors()
+                ) { Icon(Icons.Default.FilterList, null) }
             }
 
+            IconButton(
+                onClick = {
+                    coroutineScope.launch {
+                        state.animateScrollToMonth(state.firstVisibleMonth.yearMonth.plusMonths(1))
+                    }
+                },
+                colors = IconButtonDefaults.filledTonalIconButtonColors()
+            ) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
+        }
+
+        Surface(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(28.dp),
+            color = colorScheme.surfaceContainerLow
+        ) {
+            HorizontalCalendar(
+                state = state,
+                dayContent = { day ->
+                    Day(
+                        day = day,
+                        isSelected = day.date == selectedDay,
+                        isToday = day.date == LocalDate.now(),
+                        taskCount = taskCounts[day.date] ?: 0,
+                        hasBirthday = birthdays.any {
+                            it.dayOfMonth == day.date.dayOfMonth && it.month == day.date.month
+                        },
+                        selectedDayBirthdays = selectedDayBirthdays,
+                        onBirthdayHold = { calendarVM.onEvent(CalendarEvent.SelectDay(day.date)) },
+                        onClick = {
+                            calendarVM.onEvent(CalendarEvent.SelectDay(day.date))
+                            if (day.position != DayPosition.MonthDate) {
+                                coroutineScope.launch { state.animateScrollToMonth(day.date.yearMonth) }
+                            }
+                        }
+                    )
+                },
+                monthHeader = { DaysOfWeek() },
+                modifier = Modifier.padding(12.dp)
+            )
+        }
+
+        // SCROLLABLE TASKS SECTION
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(bottom = 32.dp)
+        ) {
             item {
-                val dateStr = if (selectedDay == LocalDate.now()) "Aujourd'hui" else selectedDay.format(DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.FRENCH)).replaceFirstChar { it.uppercase() }
-                Row(modifier = Modifier.fillMaxWidth().padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                val dateStr = if (selectedDay == LocalDate.now()) "Aujourd'hui"
+                else selectedDay.format(DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.FRENCH))
+                    .replaceFirstChar { it.uppercase() }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(text = dateStr, style = typography.titleLarge, fontWeight = FontWeight.ExtraBold)
                     val totalItems = selectedDayTasks.size + selectedDayBirthdays.size
-                    if (totalItems > 0) Badge(containerColor = colorScheme.primaryContainer, modifier = Modifier.scale(1.2f)) { Text("$totalItems", modifier = Modifier.padding(4.dp)) }
+                    if (totalItems > 0) {
+                        Badge(containerColor = colorScheme.primaryContainer, modifier = Modifier.scale(1.2f)) {
+                            Text("$totalItems", modifier = Modifier.padding(4.dp))
+                        }
+                    }
                 }
             }
 
@@ -157,10 +221,33 @@ fun CalendarView(navController: NavController, calendarVM: CalendarVM = viewMode
             }
 
             if (selectedDayTasks.isEmpty() && selectedDayBirthdays.isEmpty()) {
-                item { Column(modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp), horizontalAlignment = Alignment.CenterHorizontally) { Text("✨", style = typography.displayMedium); Spacer(Modifier.height(12.dp)); Text("Rien de prévu pour ce jour.", color = colorScheme.onSurfaceVariant.copy(0.6f)) } }
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 48.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("✨", style = typography.displayMedium)
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            "Rien de prévu pour ce jour.",
+                            color = colorScheme.onSurfaceVariant.copy(0.6f)
+                        )
+                    }
+                }
             } else {
                 itemsIndexed(items = selectedDayTasks, key = { _, task -> task.id }) { index, task ->
-                    TaskItem(task, index = index, items = selectedDayTasks.size, onClick = { calendarVM.onEvent(CalendarEvent.EditState(task, true)) }, onLongClick = { navController.navigate("edit-task/${task.id}") }, modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp).animateItem())
+                    TaskItem(
+                        task = task,
+                        index = index,
+                        items = selectedDayTasks.size,
+                        onClick = { calendarVM.onEvent(CalendarEvent.EditState(task, true)) },
+                        onLongClick = { navController.navigate("edit-task/${task.id}") },
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 2.dp)
+                            .animateItem()
+                    )
                 }
             }
         }
@@ -331,7 +418,7 @@ fun Day(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .offset(x = 8.dp, y = (-8).dp)
+                    .offset(x = 4.dp, y = (-4).dp)
                     .zIndex(5f)
             ) {
                 // Le gâteau "immobile" sur le calendrier

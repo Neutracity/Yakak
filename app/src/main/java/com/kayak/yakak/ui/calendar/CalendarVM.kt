@@ -1,11 +1,11 @@
 package com.kayak.yakak.ui.calendar
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kayak.yakak.data.RecurrenceFrequency
 import com.kayak.yakak.data.Task
-import com.kayak.yakak.data.TaskRepository
+import com.kayak.yakak.domain.usecase.GetTasksUseCase
+import com.kayak.yakak.domain.usecase.UpdateTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,7 +28,8 @@ sealed class CalendarEvent {
 
 @HiltViewModel
 class CalendarVM @Inject constructor(
-    private val repository: TaskRepository
+    private val getTasksUseCase: GetTasksUseCase,
+    private val updateTaskUseCase: UpdateTaskUseCase
 ) : ViewModel() {
 
     private val _selectedDay = MutableStateFlow<LocalDate>(LocalDate.now())
@@ -37,25 +38,25 @@ class CalendarVM @Inject constructor(
     private val _showLowFrequency = MutableStateFlow(false)
     val showLowFrequency: StateFlow<Boolean> = _showLowFrequency.asStateFlow()
 
-    val selectedTasks: StateFlow<List<Task>> = repository.tasks
+    val selectedTasks: StateFlow<List<Task>> = getTasksUseCase()
         .combine(_selectedDay) { allTasks, day ->
             allTasks.filter { task ->
                 !task.isCompleted && isTaskOnDay(task, day) && !task.isBirthday
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val selectedDayBirthdays: StateFlow<List<Task>> = repository.tasks
+    val selectedDayBirthdays: StateFlow<List<Task>> = getTasksUseCase()
         .combine(_selectedDay) { allTasks, day ->
             allTasks.filter { it.isBirthday && it.expirationDate.toLocalDate().dayOfMonth == day.dayOfMonth && it.expirationDate.toLocalDate().month == day.month }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val taskCounts: StateFlow<Map<LocalDate, Int>> = repository.tasks
+    val taskCounts: StateFlow<Map<LocalDate, Int>> = getTasksUseCase()
         .combine(_showLowFrequency) { allTasks, showLow ->
             allTasks.filter { !it.isCompleted && !it.isBirthday && shouldShowInCalendar(it, showLow) }
                 .groupingBy { it.expirationDate.toLocalDate() }.eachCount()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
-    val birthdayDays: StateFlow<Set<LocalDate>> = repository.tasks
+    val birthdayDays: StateFlow<Set<LocalDate>> = getTasksUseCase()
         .combine(MutableStateFlow(Unit)) { allTasks, _ ->
             allTasks.filter { it.isBirthday }.map { it.expirationDate.toLocalDate() }.toSet()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
@@ -86,7 +87,7 @@ class CalendarVM @Inject constructor(
             is CalendarEvent.EditState -> viewModelScope.launch {
                 val updatedTask = if (event.newState) event.task.copy(isCompleted = true, finishedDate = LocalDateTime.now())
                 else event.task.copy(isCompleted = false, finishedDate = null)
-                repository.updateTask(updatedTask)
+                updateTaskUseCase(updatedTask)
             }
             is CalendarEvent.ToggleShowLowFrequency -> _showLowFrequency.update { event.show }
         }
