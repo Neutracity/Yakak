@@ -1,3 +1,7 @@
+<p align="center">
+<img src="./assets/yakak_icon.png" width="300" height="300" alt="Yakak Icon">
+</p>
+
 # Yakak
 
 Yakak is an all-in-one Android productivity application designed to streamline your daily routine. It integrates task management, a calendar, utility tools, and mapping features into a unified experience built with Jetpack Compose.
@@ -8,7 +12,6 @@ Yakak is an all-in-one Android productivity application designed to streamline y
 - **Integrated Calendar:** View deadlines and events in a centralized calendar view.
 - **Reminders:** Notification system for time-sensitive tasks.
 - **Maps:** Integrated map viewing within the application.
-- **Calculator:** A built-in tool for quick calculations.
 - **Settings and Customization:** Fine-grained control over application permissions and user preferences.
 - **Material Design 3:** Modern interface with support for dark mode and dynamic colors.
 
@@ -23,17 +26,15 @@ Yakak is an all-in-one Android productivity application designed to streamline y
 
 ## Preview
 
-| Task List | Calendar | Dark Mode |
+| Task List | Calendar | Maps |
 | :---: | :---: | :---: |
-| ![Task List](https://via.placeholder.com/200x400?text=Task+List) | ![Calendar](https://via.placeholder.com/200x400?text=Calendar) | ![Dark Mode](https://via.placeholder.com/200x400?text=Dark+Mode) |
-
-*(Note: Replace these placeholders with actual screenshots from your `/screenshots` folder.)*
+| ![Task List](./assets/task_list.png) | ![Calendar](./assets/calendar.png) | ![Maps View](./assets/maps.png) |
 
 ## Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/yakak.git
+   git clone https://github.com/neutracity/yakak.git
    ```
 2. Open the project in **Android Studio** (Ladybug or later version recommended).
 3. Allow Gradle to sync and download the necessary dependencies.
@@ -47,8 +48,7 @@ com.kayak.yakak/
 ├── ui/            # Composables, ViewModels, and Theme definitions
 │   ├── tasklist/  # Task management logic and views
 │   ├── calendar/  # Calendar view implementation
-│   ├── maps/      # Google Maps integration
-│   └── calc/      # Calculator functionality
+│   └── maps/      # Google Maps integration
 └── utils/         # BroadcastReceivers and Schedulers for reminders
 ```
 
@@ -61,9 +61,5 @@ Contributions are welcome. Please follow these steps:
 4. Push to the branch (`git push origin feature/AmazingFeature`).
 5. Open a Pull Request.
 
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
 ---
-Developed by [Your Name/Username]
+Developed by Neutra and TFB

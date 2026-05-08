@@ -54,6 +54,7 @@ import com.kayak.yakak.data.Task
 import com.kayak.yakak.ui.calc.CalcView
 import com.kayak.yakak.ui.calendar.CalendarVM
 import com.kayak.yakak.ui.calendar.CalendarView
+import com.kayak.yakak.ui.maps.MapsVM
 import com.kayak.yakak.ui.maps.MapsView
 import com.kayak.yakak.ui.settings.SettingsView
 import com.kayak.yakak.ui.settings.permissions.PermissionsView
@@ -80,6 +81,7 @@ fun MainView(
     navController: NavHostController,
     taskListVM: TaskListVM,
     calendarVM: CalendarVM,
+    mapsVM: MapsVM,
     onTopBarClick: () -> Unit = {},
 ){
 
@@ -141,7 +143,7 @@ fun MainView(
                     )
                     2 -> MapsView(
                         navController = navController,
-                        taskListVM = taskListVM,
+                        mapsVM = mapsVM,
                         onMapReady = { map, overlay ->
                             mapRef = map
                             mapLocationOverlay = overlay
@@ -254,6 +256,7 @@ fun AppScreen(initialPage : Int = 1){
     val scope = rememberCoroutineScope()
     val taskListVM : TaskListVM = hiltViewModel()
     val calendarVM : CalendarVM = hiltViewModel()
+    val mapsVM : MapsVM = hiltViewModel()
 
     val uiState by taskListVM.uiState.collectAsState()
 
@@ -322,6 +325,7 @@ fun AppScreen(initialPage : Int = 1){
                         navController,
                         taskListVM,
                         calendarVM,
+                        mapsVM,
                         ({ scope.launch { drawerState.toggle() } })
                     )
                 }
