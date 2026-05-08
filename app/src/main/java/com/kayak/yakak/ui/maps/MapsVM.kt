@@ -3,7 +3,6 @@ package com.kayak.yakak.ui.maps
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kayak.yakak.data.Location
-import com.kayak.yakak.data.Task
 import com.kayak.yakak.domain.usecase.AddTaskUseCase
 import com.kayak.yakak.domain.usecase.GetTasksUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,12 +38,9 @@ class MapsVM @Inject constructor(
     fun onEvent(event: MapsEvent) {
         viewModelScope.launch {
             when (event) {
-                is MapsEvent.OnMapLongClick -> {
-                    val newTask = Task(
-                        name = "Nouveau repère",
-                        location = Location(event.latitude, event.longitude)
-                    )
-                    addTaskUseCase(newTask)
+                is MapsEvent.OnNewTask -> {
+                    addTaskUseCase(event.task)
+
                 }
                 is MapsEvent.OnPermissionResult -> {
                     // Handle permission status if needed

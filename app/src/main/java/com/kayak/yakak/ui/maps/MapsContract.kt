@@ -11,6 +11,6 @@ data class MapsUiState(
 )
 
 sealed class MapsEvent {
-    data class OnMapLongClick(val latitude: Double, val longitude: Double) : MapsEvent()
+    data class OnNewTask(val task: Task) : MapsEvent()
     data class OnPermissionResult(val granted: Boolean) : MapsEvent()
 }
