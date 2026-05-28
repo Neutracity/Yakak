@@ -1,0 +1,136 @@
+<resources>
+    <string name="app_name">Yakak</string>
+    
+    <!-- Navigation -->
+    <string name="nav_agenda">Agenda</string>
+    <string name="nav_tasks">Tâches</string>
+    <string name="nav_maps">Cartes</string>
+    <string name="nav_settings">Paramètres</string>
+    <string name="nav_about">À propos</string>
+    <string name="sub_todo">Qu\'allez-vous faire aujourd\'hui ?</string>
+    <string name="sub_maps">Où devez-vous aller ?</string>
+    <string name="task_count_month">%d tâches à faire ce mois-ci</string>
+    <string name="recurring_task_default">Tâche récurrente</string>
+    <string name="back">Retour</string>
+    <string name="prox_title">À proximité : %s</string>
+    <string name="prox_desc">Vous êtes à moins de 300m de cet objectif.</string>
+    <string name="navigation_icon">Icône de navigation</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Paramètres</string>
+    <string name="settings_appearance">Apparence</string>
+    <string name="settings_dynamic_colors">Couleurs dynamiques</string>
+    <string name="settings_dynamic_colors_desc">Adapte l\'app à ton fond d\'écran</string>
+    <string name="settings_theme">Thème de l\'application</string>
+    <string name="settings_theme_system">Système</string>
+    <string name="settings_theme_light">Clair</string>
+    <string name="settings_theme_dark">Sombre</string>
+    <string name="settings_font_size">Taille de la police</string>
+    <string name="settings_language">Langue de l\'application</string>
+    <string name="settings_language_en">Anglais</string>
+    <string name="settings_language_fr">Français</string>
+    <string name="settings_security_access">Sécurité &amp; Accès</string>
+    <string name="settings_permissions">Permissions</string>
+    <string name="settings_permissions_desc">Gérer les accès Notifications et GPS</string>
+    <string name="settings_preferences">Préférences</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notifications_desc">Rappels pour tes tâches</string>
+    <string name="settings_sounds">Sons</string>
+    <string name="settings_sounds_desc">Effets sonores de complétion</string>
+    <string name="settings_data">Données</string>
+    <string name="settings_auto_backup">Sauvegarde automatique</string>
+    <string name="settings_auto_backup_desc">Synchronisation Cloud</string>
+    <string name="settings_clear_cache">Vider le cache</string>
+    <string name="settings_cache_current">Actuel: %s</string>
+    <string name="settings_version">Version %s</string>
+
+    <!-- About -->
+    <string name="about_title">À propos de Yakak</string>
+    <string name="about_subtitle">En savoir plus sur le projet et les développeurs</string>
+    <string name="about_team">L\'équipe</string>
+    <string name="about_what_is_yakak">Qu\'est-ce que Yakak ?</string>
+    <string name="about_description">Yakak (Yet Another Kalendar App in Kotlin) est une application de productivité conçue pour vous aider à gérer vos tâches, votre agenda et vos lieux dans un espace expressif. Conçu comme un projet de cours avec un accent sur le design Material 3 moderne.</string>
+    <string name="about_built_with">Conçu avec</string>
+    <string name="about_github">GitHub</string>
+    <string name="about_social">Social</string>
+    <string name="about_copyright">Yakak © 2024 - Projet de cours</string>
+    <string name="about_dev_android">Développeur Android</string>
+    <string name="about_dev_osm">Développeur Android OSM</string>
+    <string name="about_dev_neutracity_desc">Passionné par la création d\'applications et d\'interfaces expressives avec Jetpack Compose.</string>
+    <string name="about_dev_tfb_desc">Concentré sur la création d\'expériences utilisateur fluides et l\'intégration d\'Open Street Map.</string>
+
+    <!-- Task List -->
+    <string name="tasks_completed">Tâches terminées</string>
+    <string name="tasks_birthday_title">Anniversaire de %s</string>
+    <string name="tasks_birthday_desc">C\'est sa journée spéciale ! \uD83C\uDF82✨</string>
+    <string name="tasks_streak">Streak %d</string>
+    <string name="tasks_empty_title">Rien à faire pour le moment !</string>
+    <string name="tasks_empty_desc">Profitez de votre temps libre ou créez une nouvelle tâche pour rester organisé.</string>
+    <string name="tasks_create_first">Créer ma première tâche</string>
+    <string name="tasks_section_birthdays">Anniversaires</string>
+    <string name="tasks_section_mix">Mix du jour</string>
+    <string name="tasks_section_upcoming">À venir</string>
+    
+    <!-- Edit Task -->
+    <string name="edit_task_title">Éditer la tâche</string>
+    <string name="edit_task_subtitle">Personnalisez votre moment</string>
+    <string name="edit_task_name_label">Nom de la tâche</string>
+    <string name="edit_task_description_label">Description</string>
+    <string name="edit_task_recurrence">Récurrence</string>
+    <string name="edit_task_timing_reminders">Timing &amp; Rappels</string>
+    <string name="edit_task_all_day">Toute la journée</string>
+    <string name="edit_task_date">Date</string>
+    <string name="edit_task_time">Heure</string>
+    <string name="edit_task_reminders">Rappels</string>
+    <string name="save">Enregistrer</string>
+
+    <!-- Edit Birthday -->
+    <string name="edit_birthday_default_name">L\'Anniv</string>
+    <string name="edit_birthday_person_name">Nom de la personne</string>
+    <string name="edit_birthday_date">Date d\'anniversaire</string>
+    <string name="edit_birthday_every_year">Chaque année 🎂</string>
+    <string name="edit_birthday_no_reminders">Aucun rappel défini</string>
+    <string name="edit_birthday_party">C\'est la fête !</string>
+    <string name="date_at">à</string>
+
+    <!-- Modals / Dialogs -->
+    <string name="ok">OK</string>
+    <string name="cancel">Annuler</string>
+    <string name="add_reminder">Ajouter un rappel</string>
+    <string name="reminder_30m_before">30 minutes avant</string>
+    <string name="reminder_1h_before">1 heure avant</string>
+    <string name="reminder_1d_before">1 jour avant (12:00)</string>
+    <string name="reminder_1w_before">1 semaine avant</string>
+    <string name="reminder_custom">Personnalisé...</string>
+    <string name="recurrence_title">Récurrence</string>
+    
+    <!-- Recurrence Frequencies -->
+    <string name="recurrence_none">Aucune</string>
+    <string name="recurrence_daily">Quotidienne</string>
+    <string name="recurrence_weekly">Hebdomadaire</string>
+    <string name="recurrence_monthly">Mensuelle</string>
+    <string name="recurrence_yearly">Annuelle</string>
+
+    <!-- Calendar -->
+    <string name="today">Aujourd\'hui</string>
+    <string name="calendar_empty">Rien de prévu pour ce jour.</string>
+    <string name="happy_birthday">Joyeux anniversaire !</string>
+    
+    <!-- Days of week -->
+    <string name="day_mon">Lun</string>
+    <string name="day_tue">Mar</string>
+    <string name="day_wed">Mer</string>
+    <string name="day_thu">Jeu</string>
+    <string name="day_fri">Ven</string>
+    <string name="day_sat">Sam</string>
+    <string name="day_sun">Dim</string>
+
+    <!-- Maps -->
+    <string name="map_completed">Terminée</string>
+
+    <!-- FAB Menu -->
+    <string name="fab_birthday">Anniversaire</string>
+    <string name="fab_task">Tâche</string>
+    <string name="fab_recurring">Récurrente</string>
+
+</resources>

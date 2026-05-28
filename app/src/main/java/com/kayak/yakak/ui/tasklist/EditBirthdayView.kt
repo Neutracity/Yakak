@@ -63,10 +63,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.kayak.yakak.R
 import com.kayak.yakak.data.RecurrenceFrequency
 import com.kayak.yakak.data.Task
 import java.time.LocalDateTime
@@ -187,7 +189,7 @@ fun EditBirthdayView(
                     Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null)
                 }
                 Text(
-                    text = if (nameText.isBlank()) "L'Anniv" else nameText,
+                    text = if (nameText.isBlank()) stringResource(R.string.edit_birthday_default_name) else nameText,
                     style = MaterialTheme.typography.displayMedium.copy(
                         fontWeight = FontWeight.Black,
                         letterSpacing = (-2).sp,
@@ -246,7 +248,7 @@ fun EditBirthdayView(
                     OutlinedTextField(
                         value = nameText,
                         onValueChange = { nameText = it },
-                        label = { Text("Nom de la personne") },
+                        label = { Text(stringResource(R.string.edit_birthday_person_name)) },
                         modifier = Modifier.fillMaxWidth(),
                         textStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                         shape = MaterialTheme.shapes.extraLarge,
@@ -264,7 +266,7 @@ fun EditBirthdayView(
                                 Icon(Icons.Default.Cake, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                 Spacer(Modifier.width(16.dp))
                                 Column {
-                                    Text("Date d'anniversaire", style = MaterialTheme.typography.labelMedium)
+                                    Text(stringResource(R.string.edit_birthday_date), style = MaterialTheme.typography.labelMedium)
                                     Text(expirationDate.format(DateTimeFormatter.ofPattern("dd MMMM")), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                                 }
                             }
@@ -275,8 +277,8 @@ fun EditBirthdayView(
                                 Icon(Icons.Outlined.Repeat, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Spacer(Modifier.width(16.dp))
                                 Column {
-                                    Text("Récurrence", style = MaterialTheme.typography.labelMedium)
-                                    Text("Chaque année 🎂", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                                    Text(stringResource(R.string.edit_task_recurrence), style = MaterialTheme.typography.labelMedium)
+                                    Text(stringResource(R.string.edit_birthday_every_year), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
                                 }
                             }
                         }
@@ -290,15 +292,16 @@ fun EditBirthdayView(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Rappels", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.edit_task_reminders), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             IconButton(onClick = { pickerContext = PickerContext.REMINDER_OPTIONS }) {
                                 Icon(Icons.Outlined.AddAlert, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                         
                         if (reminderList.isEmpty()) {
-                            Text("Aucun rappel défini", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.edit_birthday_no_reminders), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         } else {
+                            val dateAt = stringResource(R.string.date_at)
                             reminderList.forEach { reminder ->
                                 Card(
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -308,7 +311,7 @@ fun EditBirthdayView(
                                     Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                                         Icon(Icons.Outlined.Notifications, contentDescription = null, modifier = Modifier.size(20.dp))
                                         Spacer(Modifier.width(12.dp))
-                                        Text(reminder.format(DateTimeFormatter.ofPattern("dd MMM 'à' HH:mm")))
+                                        Text(reminder.format(DateTimeFormatter.ofPattern("dd MMM '$dateAt' HH:mm")))
                                         Spacer(Modifier.weight(1f))
                                         IconButton(onClick = { reminderList = reminderList - reminder }, modifier = Modifier.size(24.dp)) {
                                             Icon(Icons.Outlined.Close, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -354,7 +357,7 @@ fun EditBirthdayView(
                     containerColor = if (nameText.isNotBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                     contentColor = if (nameText.isNotBlank()) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
                     icon = { Icon(Icons.Outlined.Celebration, contentDescription = null) },
-                    text = { Text("C'est la fête !", fontWeight = FontWeight.Bold) }
+                    text = { Text(stringResource(R.string.edit_birthday_party), fontWeight = FontWeight.Bold) }
                 )
             }
         }

@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.kayak.yakak.R
 import com.kayak.yakak.data.RecurrenceFrequency
 import java.time.*
 
@@ -22,12 +24,12 @@ fun DatePickerModal(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = { onDateSelected(datePickerState.selectedDateMillis) }) {
-                Text("OK")
+                Text(stringResource(R.string.ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler")
+                Text(stringResource(R.string.cancel))
             }
         }
     ) {
@@ -48,12 +50,12 @@ fun TimePickerModal(
             TextButton(onClick = {
                 onTimeSelected(LocalTime.of(timePickerState.hour, timePickerState.minute))
             }) {
-                Text("OK")
+                Text(stringResource(R.string.ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler")
+                Text(stringResource(R.string.cancel))
             }
         },
         text = {
@@ -70,14 +72,14 @@ fun PredefinedRemindersModal(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Ajouter un rappel") },
+        title = { Text(stringResource(R.string.add_reminder)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 val options = listOf(
-                    "30 minutes avant" to taskExpirationDate.minusMinutes(30),
-                    "1 heure avant" to taskExpirationDate.minusHours(1),
-                    "1 jour avant (12:00)" to taskExpirationDate.minusDays(1).withHour(12).withMinute(0),
-                    "1 semaine avant" to taskExpirationDate.minusWeeks(1)
+                    stringResource(R.string.reminder_30m_before) to taskExpirationDate.minusMinutes(30),
+                    stringResource(R.string.reminder_1h_before) to taskExpirationDate.minusHours(1),
+                    stringResource(R.string.reminder_1d_before) to taskExpirationDate.minusDays(1).withHour(12).withMinute(0),
+                    stringResource(R.string.reminder_1w_before) to taskExpirationDate.minusWeeks(1)
                 )
 
                 options.forEach { (label, time) ->
@@ -98,7 +100,7 @@ fun PredefinedRemindersModal(
                     onClick = { onOptionSelected(null) }
                 ) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
-                        Text("Personnalisé...")
+                        Text(stringResource(R.string.reminder_custom))
                     }
                 }
             }
@@ -106,7 +108,7 @@ fun PredefinedRemindersModal(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -120,7 +122,7 @@ fun RecurrencePickerModal(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Récurrence") },
+        title = { Text(stringResource(R.string.recurrence_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 RecurrenceFrequency.entries.forEach { freq ->
@@ -130,7 +132,15 @@ fun RecurrencePickerModal(
                         colors = if (current == freq) ButtonDefaults.textButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer) else ButtonDefaults.textButtonColors()
                     ) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
-                            Text(freq.name)
+                            Text(
+                                when(freq) {
+                                    RecurrenceFrequency.NONE -> stringResource(R.string.recurrence_none)
+                                    RecurrenceFrequency.DAILY -> stringResource(R.string.recurrence_daily)
+                                    RecurrenceFrequency.WEEKLY -> stringResource(R.string.recurrence_weekly)
+                                    RecurrenceFrequency.MONTHLY -> stringResource(R.string.recurrence_monthly)
+                                    RecurrenceFrequency.YEARLY -> stringResource(R.string.recurrence_yearly)
+                                }
+                            )
                         }
                     }
                 }
@@ -139,7 +149,7 @@ fun RecurrencePickerModal(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

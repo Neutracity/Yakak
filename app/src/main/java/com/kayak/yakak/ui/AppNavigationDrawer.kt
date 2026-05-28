@@ -31,6 +31,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.kayak.yakak.R
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -46,11 +48,11 @@ fun AppNavigationDrawer(
     val scope = rememberCoroutineScope()
 
     val items = listOf(
-        NavigationItem("Agenda", Icons.Filled.CalendarMonth, Icons.Outlined.CalendarMonth, 0),
-        NavigationItem("Tasks", Icons.Filled.Checklist, Icons.Outlined.Checklist, 1),
-        NavigationItem("Maps", Icons.Filled.Map, Icons.Outlined.Map, 2),
-        NavigationItem("Settings", Icons.Filled.Settings, Icons.Outlined.Settings, -1),
-        NavigationItem("About", Icons.Filled.Info, Icons.Outlined.Info, -1)
+        NavigationItem(stringResource(R.string.nav_agenda), Icons.Filled.CalendarMonth, Icons.Outlined.CalendarMonth, 0),
+        NavigationItem(stringResource(R.string.nav_tasks), Icons.Filled.Checklist, Icons.Outlined.Checklist, 1),
+        NavigationItem(stringResource(R.string.nav_maps), Icons.Filled.Map, Icons.Outlined.Map, 2),
+        NavigationItem(stringResource(R.string.nav_settings), Icons.Filled.Settings, Icons.Outlined.Settings, -1),
+        NavigationItem(stringResource(R.string.nav_about), Icons.Filled.Info, Icons.Outlined.Info, -1)
     )
 
     Row {
@@ -65,6 +67,8 @@ fun AppNavigationDrawer(
                     .padding(horizontal = 12.dp)
                     .verticalScroll(rememberScrollState())
             ) {
+                val aboutLabel = stringResource(R.string.nav_about)
+                val settingsLabel = stringResource(R.string.nav_settings)
                 items.forEach { item ->
                     val isSelected = selectedIndex == item.index && item.index != -1
 
@@ -75,9 +79,9 @@ fun AppNavigationDrawer(
                                 state.collapse()
                                 if (item.index != -1) {
                                     onPageSelected(item.index)
-                                } else if (item.label == "About") {
+                                } else if (item.label == aboutLabel) {
                                     onAboutClick()
-                                }else if (item.label == "Settings") {
+                                }else if (item.label == settingsLabel) {
                                     onSettingsClick()
                                 }
                             }

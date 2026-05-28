@@ -45,9 +45,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.kayak.yakak.R
 import com.kayak.yakak.ui.theme.YKShapeDefaults.cardShape
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,13 +72,13 @@ fun SettingsView(
             LargeTopAppBar(
                 title = { 
                     Text(
-                        "Paramètres", 
+                        stringResource(R.string.settings_title), 
                         style = MaterialTheme.typography.displayMedium
                     ) 
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -95,12 +97,12 @@ fun SettingsView(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // --- SECTION PERSONNALISATION ---
-            item { SettingHeader("Apparence") }
+            item { SettingHeader(stringResource(R.string.settings_appearance)) }
             item {
                 SettingsCard {
                     SettingsSwitchItem(
-                        title = "Couleurs dynamiques",
-                        subtitle = "Adapte l'app à ton fond d'écran",
+                        title = stringResource(R.string.settings_dynamic_colors),
+                        subtitle = stringResource(R.string.settings_dynamic_colors_desc),
                         icon = Icons.Default.Palette,
                         checked = state.isDynamicColorEnabled,
                         onCheckedChange = { viewModel.onEvent(SettingsEvent.ToggleDynamicColor(it)) }
@@ -108,7 +110,7 @@ fun SettingsView(
                     
                     // SegmentedButton for Theme
                     Column(Modifier.padding(16.dp)) {
-                        Text("Thème de l'application", style = MaterialTheme.typography.labelLarge)
+                        Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.labelLarge)
                         Spacer(Modifier.height(8.dp))
                         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                             ThemeMode.entries.forEachIndexed { index, mode ->
@@ -118,9 +120,29 @@ fun SettingsView(
                                     shape = SegmentedButtonDefaults.itemShape(index = index, count = ThemeMode.entries.size)
                                 ) {
                                     Text(when(mode) {
-                                        ThemeMode.System -> "Système"
-                                        ThemeMode.Light -> "Clair"
-                                        ThemeMode.Dark -> "Sombre"
+                                        ThemeMode.System -> stringResource(R.string.settings_theme_system)
+                                        ThemeMode.Light -> stringResource(R.string.settings_theme_light)
+                                        ThemeMode.Dark -> stringResource(R.string.settings_theme_dark)
+                                    })
+                                }
+                            }
+                        }
+                    }
+
+                    // SegmentedButton for Language
+                    Column(Modifier.padding(16.dp)) {
+                        Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.labelLarge)
+                        Spacer(Modifier.height(8.dp))
+                        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                            AppLanguage.entries.forEachIndexed { index, lang ->
+                                SegmentedButton(
+                                    selected = state.appLanguage == lang,
+                                    onClick = { viewModel.onEvent(SettingsEvent.SetLanguage(lang)) },
+                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = AppLanguage.entries.size)
+                                ) {
+                                    Text(when(lang) {
+                                        AppLanguage.English -> stringResource(R.string.settings_language_en)
+                                        AppLanguage.French -> stringResource(R.string.settings_language_fr)
                                     })
                                 }
                             }
@@ -129,7 +151,7 @@ fun SettingsView(
 
                     // Font Scale Slider
                     Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                        Text("Taille de la police", style = MaterialTheme.typography.labelLarge)
+                        Text(stringResource(R.string.settings_font_size), style = MaterialTheme.typography.labelLarge)
                         Slider(
                             value = state.fontScale,
                             onValueChange = { viewModel.onEvent(SettingsEvent.SetFontScale(it)) },
@@ -141,12 +163,12 @@ fun SettingsView(
             }
 
             // --- SECTION PERMISSIONS ---
-            item { SettingHeader("Sécurité & Accès") }
+            item { SettingHeader(stringResource(R.string.settings_security_access)) }
             item {
                 SettingsCard {
                     SettingsClickableItem(
-                        title = "Permissions",
-                        subtitle = "Gérer les accès Notifications et GPS",
+                        title = stringResource(R.string.settings_permissions),
+                        subtitle = stringResource(R.string.settings_permissions_desc),
                         icon = Icons.Default.Security,
                         onClick = { navController.navigate("settings/permissions") }
                     )
@@ -154,19 +176,19 @@ fun SettingsView(
             }
 
             // --- SECTION PRÉFÉRENCES ---
-            item { SettingHeader("Préférences") }
+            item { SettingHeader(stringResource(R.string.settings_preferences)) }
             item {
                 SettingsCard {
                     SettingsSwitchItem(
-                        title = "Notifications",
-                        subtitle = "Rappels pour tes tâches",
+                        title = stringResource(R.string.settings_notifications),
+                        subtitle = stringResource(R.string.settings_notifications_desc),
                         icon = Icons.Default.Notifications,
                         checked = state.notificationsEnabled,
                         onCheckedChange = { viewModel.onEvent(SettingsEvent.ToggleNotifications(it)) }
                     )
                     SettingsSwitchItem(
-                        title = "Sons",
-                        subtitle = "Effets sonores de complétion",
+                        title = stringResource(R.string.settings_sounds),
+                        subtitle = stringResource(R.string.settings_sounds_desc),
                         icon = Icons.AutoMirrored.Filled.VolumeUp,
                         checked = state.soundEffectsEnabled,
                         onCheckedChange = { viewModel.onEvent(SettingsEvent.ToggleSoundEffects(it)) }
@@ -175,19 +197,19 @@ fun SettingsView(
             }
 
             // --- SECTION DONNÉES ---
-            item { SettingHeader("Données") }
+            item { SettingHeader(stringResource(R.string.settings_data)) }
             item {
                 SettingsCard {
                     SettingsSwitchItem(
-                        title = "Sauvegarde automatique",
-                        subtitle = "Synchronisation Cloud",
+                        title = stringResource(R.string.settings_auto_backup),
+                        subtitle = stringResource(R.string.settings_auto_backup_desc),
                         icon = Icons.Default.Backup,
                         checked = state.autoBackupEnabled,
                         onCheckedChange = { viewModel.onEvent(SettingsEvent.ToggleAutoBackup(it)) }
                     )
                     SettingsClickableItem(
-                        title = "Vider le cache",
-                        subtitle = "Actuel: ${state.cacheSize}",
+                        title = stringResource(R.string.settings_clear_cache),
+                        subtitle = stringResource(R.string.settings_cache_current, state.cacheSize),
                         icon = Icons.Default.DeleteSweep,
                         onClick = { viewModel.onEvent(SettingsEvent.ClearCache) }
                     )
@@ -208,7 +230,7 @@ fun SettingsView(
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "Version ${state.appVersion}",
+                        text = stringResource(R.string.settings_version, state.appVersion),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.outline
                     )

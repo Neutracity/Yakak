@@ -52,12 +52,14 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.kayak.yakak.R
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -122,9 +124,9 @@ fun BottomBar(
                     modifier = Modifier.zIndex(1f).align(Alignment.BottomStart).padding(start = 64.dp)
                 ) {
                     val items = listOf(
-                        Triple("Agenda", Icons.Filled.CalendarMonth, Icons.Outlined.CalendarMonth),
-                        Triple("Tasks", Icons.Filled.Checklist, Icons.Outlined.Checklist),
-                        Triple("Maps", Icons.Filled.Map, Icons.Outlined.Map)
+                        Triple(stringResource(R.string.nav_agenda), Icons.Filled.CalendarMonth, Icons.Outlined.CalendarMonth),
+                        Triple(stringResource(R.string.nav_tasks), Icons.Filled.Checklist, Icons.Outlined.Checklist),
+                        Triple(stringResource(R.string.nav_maps), Icons.Filled.Map, Icons.Outlined.Map)
                     )
                     items.forEachIndexed { index, item ->
                         ToggleButton(
@@ -211,19 +213,19 @@ fun BottomBar(
                 FloatingActionButtonMenuItem(
                     onClick = { onAddBirthday(); onFabMenuToggle(false) },
                     icon = { Icon(Icons.Default.Cake, contentDescription = null) },
-                    text = { Text(text = "Anniversaire") },
+                    text = { Text(text = stringResource(R.string.fab_birthday)) },
                     modifier = Modifier.zIndex(22f)
                 )
                 FloatingActionButtonMenuItem(
                     onClick = { onAddNormalTask(); onFabMenuToggle(false) },
                     icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                    text = { Text(text = "Tâche") },
+                    text = { Text(text = stringResource(R.string.fab_task)) },
                     modifier = Modifier.zIndex(22f).testTag("ADDTASK")
                 )
                 FloatingActionButtonMenuItem(
                     onClick = { onAddRecurringTask(); onFabMenuToggle(false) },
                     icon = { Icon(Icons.Default.Repeat, contentDescription = null) },
-                    text = { Text(text = "Récurrente") },
+                    text = { Text(text = stringResource(R.string.fab_recurring)) },
                     modifier = Modifier.zIndex(22f)
                 )
             }

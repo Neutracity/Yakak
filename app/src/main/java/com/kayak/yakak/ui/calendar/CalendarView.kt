@@ -63,6 +63,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -71,6 +72,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.kayak.yakak.R
 import com.kayak.yakak.data.Task
 import com.kayak.yakak.ui.tasklist.BirthdayItem
 import com.kayak.yakak.ui.tasklist.TaskItem
@@ -191,8 +193,8 @@ fun CalendarView(navController: NavController, calendarVM: CalendarVM = viewMode
             contentPadding = PaddingValues(bottom = 32.dp)
         ) {
             item {
-                val dateStr = if (selectedDay == LocalDate.now()) "Aujourd'hui"
-                else selectedDay.format(DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.FRENCH))
+                val dateStr = if (selectedDay == LocalDate.now()) stringResource(R.string.today)
+                else selectedDay.format(DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.getDefault()))
                     .replaceFirstChar { it.uppercase() }
 
                 Row(
@@ -231,7 +233,7 @@ fun CalendarView(navController: NavController, calendarVM: CalendarVM = viewMode
                         Text("✨", style = typography.displayMedium)
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            "Rien de prévu pour ce jour.",
+                            stringResource(R.string.calendar_empty),
                             color = colorScheme.onSurfaceVariant.copy(0.6f)
                         )
                     }
@@ -309,7 +311,7 @@ fun BirthdayPopupContent(
                     )
                 }
                 Text(
-                    text = "Joyeux anniversaire !",
+                    text = stringResource(R.string.happy_birthday),
                     style = typography.labelSmall,
                     color = colorScheme.onSecondaryContainer.copy(alpha = 0.6f)
                 )
@@ -454,7 +456,15 @@ fun Day(
 @Composable
 fun DaysOfWeek() {
     Row(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-        listOf("Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim").forEach { day ->
+        listOf(
+            stringResource(R.string.day_mon),
+            stringResource(R.string.day_tue),
+            stringResource(R.string.day_wed),
+            stringResource(R.string.day_thu),
+            stringResource(R.string.day_fri),
+            stringResource(R.string.day_sat),
+            stringResource(R.string.day_sun)
+        ).forEach { day ->
             Text(text = day, style = typography.labelMedium, fontWeight = FontWeight.Bold, color = colorScheme.primary.copy(0.5f), textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
         }
     }

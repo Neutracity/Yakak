@@ -17,7 +17,7 @@ data class SettingsState(
     val cacheSize: String = "24 MB",
     
     // Compte
-    val language: String = "Français",
+    val appLanguage: AppLanguage = AppLanguage.French,
     val userName: String = "Utilisateur",
     val userEmail: String = "user@example.com",
     val appVersion: String = "1.2.0-expressive",
@@ -28,6 +28,7 @@ data class SettingsState(
 )
 
 enum class ThemeMode { System, Light, Dark }
+enum class AppLanguage(val code: String) { English("en"), French("fr") }
 enum class NotificationFrequency { MINIMAL, NORMAL, ALL }
 
 sealed class SettingsEvent {
@@ -35,6 +36,7 @@ sealed class SettingsEvent {
     data class ToggleDynamicColor(val enabled: Boolean) : SettingsEvent()
     data class SetThemeMode(val mode: ThemeMode) : SettingsEvent()
     data class SetFontScale(val scale: Float) : SettingsEvent()
+    data class SetLanguage(val language: AppLanguage) : SettingsEvent()
     
     // Préférences
     data class ToggleNotifications(val enabled: Boolean) : SettingsEvent()

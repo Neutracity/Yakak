@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -49,6 +50,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.kayak.yakak.R
 import com.kayak.yakak.data.RecurrenceFrequency
 import com.kayak.yakak.data.Task
 import com.kayak.yakak.ui.calc.CalcView
@@ -85,23 +87,32 @@ fun MainView(
     onTopBarClick: () -> Unit = {},
 ){
 
-    val titles = remember { listOf("Agenda","To-Do List","Maps") }
-    val subtitles = remember { listOf("","What are you going to do today ?","Where do you need to go ?") }
+    val titles = listOf(
+        stringResource(R.string.nav_agenda),
+        stringResource(R.string.nav_tasks),
+        stringResource(R.string.nav_maps)
+    )
+    val subtitles = listOf(
+        "",
+        stringResource(R.string.sub_todo),
+        stringResource(R.string.sub_maps)
+    )
     val selectedDay by calendarVM.selectedDay.collectAsState()
     val taskCounts by calendarVM.taskCounts.collectAsState()
 
     // Optimisation : Utiliser derivedStateOf pour éviter des recompositions inutiles de la TopBar lors du scroll
-    val currentTitle by remember(selectedDay) {
+    val currentTitle by remember(selectedDay, titles, pagerState.targetPage) {
         derivedStateOf {
             if (pagerState.targetPage == 0) selectedDay.month.toString()
             else titles[pagerState.targetPage]
         }
     }
 
-    val currentSubtitle by remember(selectedDay, taskCounts) {
+    val taskCountText = stringResource(R.string.task_count_month, taskCounts[selectedDay] ?: 0)
+    val currentSubtitle by remember(selectedDay, taskCounts, subtitles, pagerState.targetPage, taskCountText) {
         derivedStateOf {
             if (pagerState.targetPage == 0 && taskCounts[selectedDay] != null)
-                "${taskCounts[selectedDay]} tasks to do this month"
+                taskCountText
             else subtitles[pagerState.targetPage]
         }
     }
@@ -152,6 +163,7 @@ fun MainView(
                 }
             }
         }
+        val recurringTaskName = stringResource(R.string.recurring_task_default)
         BottomBar(
             modifier = Modifier.align(Alignment.BottomCenter),
             expanded = true,
@@ -172,7 +184,7 @@ fun MainView(
             },
             onAddRecurringTask = {
                 val newTask = Task(
-                    name = "Tâche récurrente",
+                    name = recurringTaskName,
                     recurrence = RecurrenceFrequency.DAILY,
                     expirationDate = LocalDateTime.now()
                 )

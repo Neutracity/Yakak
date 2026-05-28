@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -64,8 +65,8 @@ fun AboutView(
         topBar = {
             TopBar(
                 scrollBehavior = scrollBehavior,
-                title = "About Yakak",
-                subtitle = "Learn more about the project and developers",
+                title = stringResource(R.string.about_title),
+                subtitle = stringResource(R.string.about_subtitle),
                 navigationIcon = Icons.AutoMirrored.Outlined.ArrowBack,
                 onStartClick = onBack
             )
@@ -90,7 +91,7 @@ fun AboutView(
                 ) {
                     Icon(Icons.Default.People, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Text(
-                        text = "The Team",
+                        text = stringResource(R.string.about_team),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -100,8 +101,8 @@ fun AboutView(
             item {
                 DeveloperCard(
                     name = "Neutracity",
-                    role = "Android Developer",
-                    description = "Passionate about building app and expressive UI with Jetpack Compose.",
+                    role = stringResource(R.string.about_dev_android),
+                    description = stringResource(R.string.about_dev_neutracity_desc),
                     githubUrl = "github.com/neutracity",
                     otherLink = "linkedin.com/in/dev1",
                     icon = painterResource(R.drawable.ic_neutracity)
@@ -111,8 +112,8 @@ fun AboutView(
             item {
                 DeveloperCard(
                     name = "TFB",
-                    role = "OSM Android Developer",
-                    description = "Focused on creating seamless user experiences and Open Street Map integration.",
+                    role = stringResource(R.string.about_dev_osm),
+                    description = stringResource(R.string.about_dev_tfb_desc),
                     githubUrl = "github.com/TFB445",
                     otherLink = "twitter.com/dev2",
                     icon = painterResource(R.drawable.ic_tfb)
@@ -127,7 +128,7 @@ fun AboutView(
             item {
                 Spacer(modifier = Modifier.height(32.dp))
                 Text(
-                    text = "Yakak © 2024 - Course Project",
+                    text = stringResource(R.string.about_copyright),
                     modifier = Modifier.fillMaxWidth().combinedClickable(
                         enabled = true,
                         onClick = {},
@@ -163,12 +164,12 @@ fun ProjectInfoCard() {
             )
 
             Text(
-                text = "What is Yakak?",
+                text = stringResource(R.string.about_what_is_yakak),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.ExtraBold
             )
             Text(
-                text = "Yakak (Yet Another Kalendar App in Kotlin) is a productivity app designed to help you manage your tasks, agenda, and locations in one expressive place. Built as a course project with a focus on modern Material 3 design.",
+                text = stringResource(R.string.about_description),
                 style = MaterialTheme.typography.bodyLarge
             )
         }
@@ -229,8 +230,8 @@ fun DeveloperCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SocialChip(icon = Icons.Default.Code, label = "GitHub", onClick = { uriHandler.openUri("https://$githubUrl") })
-                SocialChip(icon = Icons.Default.Language, label = "Social", onClick = { uriHandler.openUri("https://$otherLink") })
+                SocialChip(icon = Icons.Default.Code, label = stringResource(R.string.about_github), onClick = { uriHandler.openUri("https://$githubUrl") })
+                SocialChip(icon = Icons.Default.Language, label = stringResource(R.string.about_social), onClick = { uriHandler.openUri("https://$otherLink") })
             }
         }
     }
@@ -256,7 +257,7 @@ fun TechStackCard() {
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                text = "Built With",
+                text = stringResource(R.string.about_built_with),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )

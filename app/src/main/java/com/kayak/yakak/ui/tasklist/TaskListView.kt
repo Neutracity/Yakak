@@ -77,6 +77,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -86,6 +87,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.kayak.yakak.R
 import com.kayak.yakak.data.RecurrenceFrequency
 import com.kayak.yakak.data.Task
 import com.kayak.yakak.ui.theme.YKShapeDefaults.bottomListItemShape
@@ -111,7 +113,7 @@ fun ScrollDownIndicator(progress: Float, modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxWidth().padding(vertical = 12.dp).alpha((0.6f + progress * 0.4f).coerceIn(0f, 1f)).scale((1f + progress * 0.25f).coerceIn(0f, 1.5f)).offset(y = (if (progress > 0) progress else bounceY).dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Tâches terminées", style = MaterialTheme.typography.labelLarge, color = colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.tasks_completed), style = MaterialTheme.typography.labelLarge, color = colorScheme.onSurfaceVariant)
         Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, modifier = Modifier.rotate(progress * 180f), tint = colorScheme.onSurfaceVariant)
     }
 }
@@ -138,8 +140,8 @@ fun BirthdayItem(task: Task, onClick: () -> Unit = {}) {
                 }
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = "Anniversaire de ${task.name}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
-                Text(text = "C'est sa journée spéciale ! \uD83C\uDF82✨", style = MaterialTheme.typography.bodyLarge)
+                Text(text = stringResource(R.string.tasks_birthday_title, task.name), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
+                Text(text = stringResource(R.string.tasks_birthday_desc), style = MaterialTheme.typography.bodyLarge)
             }
             Icon(Icons.Outlined.Celebration, contentDescription = null, modifier = Modifier.size(40.dp))
         }
@@ -220,7 +222,7 @@ fun TaskItem(
                     if (task.recurrence != RecurrenceFrequency.NONE && !localIsCompleted && task.streakCount > 0) {
                         Spacer(Modifier.width(8.dp))
                         Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = Color(0xFFFF9800), modifier = Modifier.size(16.dp))
-                        Text("Streak ${task.streakCount}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFFF9800), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.tasks_streak, task.streakCount), style = MaterialTheme.typography.labelSmall, color = Color(0xFFFF9800), fontWeight = FontWeight.Bold)
                     }
                 }
             },
@@ -326,13 +328,13 @@ fun TaskListView(
                                 modifier = Modifier.padding(bottom = 16.dp)
                             )
                             Text(
-                                text = "Rien à faire pour le moment !",
+                                text = stringResource(R.string.tasks_empty_title),
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center
                             )
                             Text(
-                                text = "Profitez de votre temps libre ou créez une nouvelle tâche pour rester organisé.",
+                                text = stringResource(R.string.tasks_empty_desc),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
@@ -345,7 +347,7 @@ fun TaskListView(
                             ) {
                                 Icon(Icons.Default.Add, contentDescription = null)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Créer ma première tâche", fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.tasks_create_first), fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -353,7 +355,7 @@ fun TaskListView(
             }
 
             if (birthdays.isNotEmpty()) {
-                item { Text("Anniversaires", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
+                item { Text(stringResource(R.string.tasks_section_birthdays), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
                 itemsIndexed(birthdays, key = { _, task -> "bday_${task.id}" }) { index, task ->
                     BirthdayItem(
                         task = task,
@@ -364,7 +366,7 @@ fun TaskListView(
             }
 
             if (mixOfDay.isNotEmpty()) {
-                item { Text("Mix du jour", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
+                item { Text(stringResource(R.string.tasks_section_mix), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
                 itemsIndexed(mixOfDay, key = { _, task -> "mix_${task.id}" }) { index, task ->
                     TaskItem(
                         task = task,
@@ -382,7 +384,7 @@ fun TaskListView(
             }
 
             if (upcoming.isNotEmpty()) {
-                item { Text("À venir", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
+                item { Text(stringResource(R.string.tasks_section_upcoming), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
                 itemsIndexed(upcoming, key = { _, task -> "up_${task.id}" }) { index, task ->
                     TaskItem(
                         task = task,
@@ -402,7 +404,7 @@ fun TaskListView(
                 item { Spacer(Modifier.height(32.dp)) }
                 item {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)) {
-                        Text("Tâches terminées", style = MaterialTheme.typography.titleMedium, color = colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.tasks_completed), style = MaterialTheme.typography.titleMedium, color = colorScheme.onSurfaceVariant)
                         IconButton(onClick = { showHiddenItem = false }) { Icon(Icons.Default.KeyboardArrowUp, contentDescription = null) }
                     }
                 }

@@ -1,9 +1,10 @@
 package com.kayak.yakak.ui.settings
 
 import android.Manifest
+import android.app.LocaleManager
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
+import android.os.LocaleList
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -33,6 +34,10 @@ class SettingsViewModel @Inject constructor(
                 is SettingsEvent.ToggleDynamicColor -> repository.updateSettings { it.copy(isDynamicColorEnabled = event.enabled) }
                 is SettingsEvent.SetThemeMode -> repository.updateSettings { it.copy(themeMode = event.mode) }
                 is SettingsEvent.SetFontScale -> repository.updateSettings { it.copy(fontScale = event.scale) }
+                is SettingsEvent.SetLanguage -> {
+                    repository.updateSettings { it.copy(appLanguage = event.language) }
+                    changeLocale(event.language.code)
+                }
                 is SettingsEvent.ToggleNotifications -> repository.updateSettings { it.copy(notificationsEnabled = event.enabled) }
                 is SettingsEvent.ToggleSoundEffects -> repository.updateSettings { it.copy(soundEffectsEnabled = event.enabled) }
                 is SettingsEvent.ToggleHapticFeedback -> repository.updateSettings { it.copy(hapticFeedbackEnabled = event.enabled) }
@@ -54,12 +59,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun refreshPermissionStatus() {
-        val hasNotifications = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-        } else {
-            true
-        }
-
+        val hasNotifications = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
         val hasLocation = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
         repository.updateSettings { 
@@ -94,5 +94,10 @@ class SettingsViewModel @Inject constructor(
     private fun clearApplicationCache() {
         context.cacheDir.deleteRecursively()
         context.externalCacheDir?.deleteRecursively()
+    }
+
+    private fun changeLocale(languageCode: String) {
+        val localeManager = context.getSystemService(LocaleManager::class.java)
+        localeManager.applicationLocales = LocaleList.forLanguageTags(languageCode)
     }
 }

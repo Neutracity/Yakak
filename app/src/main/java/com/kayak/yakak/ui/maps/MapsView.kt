@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
@@ -142,6 +143,7 @@ fun MapsView(
     }
 
     val iconColor = colorScheme.primary.toArgb()
+    val completedText = stringResource(R.string.map_completed)
 
     LaunchedEffect(uiState.pendingTasks, uiState.finishedTasks) {
         mapView.overlays.removeAll(mapView.overlays.filterIsInstance<Marker>())
@@ -151,7 +153,7 @@ fun MapsView(
             val marker = Marker(mapView)
             marker.position = GeoPoint(task.location.latitude, task.location.longitude)
             marker.title = task.name
-            marker.snippet = if (task.isCompleted) "Terminée" else task.description
+            marker.snippet = if (task.isCompleted) completedText else task.description
             
             if (task.isCompleted) {
                 marker.icon = createDotIcon(android.graphics.Color.GRAY, 12)
@@ -225,4 +227,3 @@ fun MapsView(
         }
     }
 }
-

@@ -16,6 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 
+import androidx.compose.ui.res.stringResource
+import com.kayak.yakak.R
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TopBar(
@@ -36,7 +39,7 @@ fun TopBar(
                     contentColor = colorScheme.onSurface
                 )
 
-            ) { Icon(navigationIcon,contentDescription = "Navigation Icon") }
+            ) { Icon(navigationIcon,contentDescription = stringResource(R.string.navigation_icon)) }
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = colorScheme.surfaceContainer,

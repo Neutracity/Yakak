@@ -33,9 +33,9 @@ class ProximityManager @Inject constructor(
 
     private fun sendNotification(task: Task) {
         val intent = Intent(context, ReminderReceiver::class.java).apply {
-            putExtra("TASK_NAME", "À proximité : ${task.name}")
+            putExtra("TASK_NAME", context.getString(com.kayak.yakak.R.string.prox_title, task.name))
             putExtra("TASK_ID", task.id)
-            putExtra("TASK_DESC", "Vous êtes à moins de 300m de cet objectif.")
+            putExtra("TASK_DESC", context.getString(com.kayak.yakak.R.string.prox_desc))
         }
         context.sendBroadcast(intent)
     }

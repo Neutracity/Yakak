@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
             YakakTheme(
                 darkTheme = darkTheme,
                 dynamicColor = settingsState.isDynamicColorEnabled,
-                fontScale = settingsState.fontScale
+                fontScale = settingsState.fontScale,
             ) {
                 AppScreen()
             }

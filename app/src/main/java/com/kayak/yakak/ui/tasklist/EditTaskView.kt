@@ -47,8 +47,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.kayak.yakak.R
 import com.kayak.yakak.ui.TopBar
 import java.time.Instant
 import java.time.LocalDate
@@ -157,8 +159,8 @@ fun EditView(
         ) {
             TopBar(
                 scrollBehavior = scrollBehavior,
-                title = "Éditer la tâche",
-                subtitle = "Personnalisez votre moment",
+                title = stringResource(R.string.edit_task_title),
+                subtitle = stringResource(R.string.edit_task_subtitle),
                 navigationIcon = Icons.AutoMirrored.Outlined.ArrowBack,
                 onStartClick = popBack
             )
@@ -173,7 +175,7 @@ fun EditView(
                         modifier = Modifier.fillMaxWidth(),
                         value = nameText,
                         onValueChange = { nameText = it },
-                        label = { Text("Nom de la tâche") },
+                        label = { Text(stringResource(R.string.edit_task_name_label)) },
                         textStyle = MaterialTheme.typography.headlineSmall,
                         shape = MaterialTheme.shapes.extraLarge,
                     )
@@ -184,7 +186,7 @@ fun EditView(
                         modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
                         value = descriptionText,
                         onValueChange = { descriptionText = it },
-                        label = { Text("Description") },
+                        label = { Text(stringResource(R.string.edit_task_description_label)) },
                         shape = MaterialTheme.shapes.large,
                     )
                 }
@@ -203,9 +205,17 @@ fun EditView(
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                     Icon(Icons.Outlined.Repeat, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    Text("Récurrence", style = MaterialTheme.typography.bodyLarge)
+                                    Text(stringResource(R.string.edit_task_recurrence), style = MaterialTheme.typography.bodyLarge)
                                 }
-                                Text(task.recurrence.name, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                                Text(
+                                    when(task.recurrence) {
+                                        com.kayak.yakak.data.RecurrenceFrequency.NONE -> stringResource(R.string.recurrence_none)
+                                        com.kayak.yakak.data.RecurrenceFrequency.DAILY -> stringResource(R.string.recurrence_daily)
+                                        com.kayak.yakak.data.RecurrenceFrequency.WEEKLY -> stringResource(R.string.recurrence_weekly)
+                                        com.kayak.yakak.data.RecurrenceFrequency.MONTHLY -> stringResource(R.string.recurrence_monthly)
+                                        com.kayak.yakak.data.RecurrenceFrequency.YEARLY -> stringResource(R.string.recurrence_yearly)
+                                    }, 
+                                    style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -218,12 +228,12 @@ fun EditView(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("Timing & Rappels", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.edit_task_timing_reminders), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
 
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                     Icon(Icons.Outlined.AccessTime, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    Text("Toute la journée", style = MaterialTheme.typography.bodyLarge)
+                                    Text(stringResource(R.string.edit_task_all_day), style = MaterialTheme.typography.bodyLarge)
                                 }
                                 Switch(
                                     checked = task.isAllDay,
@@ -238,7 +248,7 @@ fun EditView(
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                     Icon(Icons.Outlined.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    Text("Date", style = MaterialTheme.typography.bodyLarge)
+                                    Text(stringResource(R.string.edit_task_date), style = MaterialTheme.typography.bodyLarge)
                                 }
                                 Text(task.expirationDate.format(dateFormatter), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
@@ -251,7 +261,7 @@ fun EditView(
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                         Icon(Icons.Outlined.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text("Heure", style = MaterialTheme.typography.bodyLarge)
+                                        Text(stringResource(R.string.edit_task_time), style = MaterialTheme.typography.bodyLarge)
                                     }
                                     Text(task.expirationDate.format(timeFormatter), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
@@ -266,7 +276,7 @@ fun EditView(
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                     Icon(Icons.Outlined.NotificationsActive, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                    Text("Rappels", style = MaterialTheme.typography.bodyLarge)
+                                    Text(stringResource(R.string.edit_task_reminders), style = MaterialTheme.typography.bodyLarge)
                                 }
                                 IconButton(onClick = { pickerContext = PickerContext.REMINDER_OPTIONS }) {
                                     Icon(Icons.Outlined.AddAlert, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -295,7 +305,7 @@ fun EditView(
                     containerColor = if (nameText.isNotBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                     contentColor = if (nameText.isNotBlank()) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
                     icon = { Icon(Icons.Outlined.Check, contentDescription = null) },
-                    text = { Text("Enregistrer", fontWeight = FontWeight.Bold) }
+                    text = { Text(stringResource(R.string.save), fontWeight = FontWeight.Bold) }
                 )
             }
         }
